@@ -116,7 +116,7 @@ export function buildReport(input: ReportInput): Report {
   };
 }
 
-const plainText = (text: string) => text.replace(/[-–—]/g, " ");
+const plainText = (text: string) => text.replace(/[-\u2013\u2014]/g, " ");
 const percent = (value: number) => `${(value * 100).toFixed(1)} percent`;
 const interval = (proportion: Proportion) => `${percent(proportion.rate)} (95 percent interval ${percent(proportion.low)} to ${percent(proportion.high)})`;
 const cell = (value: number | null, money = false) => (value === null ? "pending" : money ? formatUsd(value) : String(value));

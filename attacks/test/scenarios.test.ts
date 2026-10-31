@@ -24,7 +24,7 @@ describe("scenario set", () => {
 
   it("keeps scenario text free of dashes", () => {
     for (const scenario of [...core, ...limitationScenarios]) {
-      expect(`${scenario.description} ${scenario.expected}`).not.toMatch(/[-–—]/);
+      expect(`${scenario.description} ${scenario.expected}`).not.toMatch(/[-\u2013\u2014]/);
     }
   });
 });
