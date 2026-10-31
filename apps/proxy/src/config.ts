@@ -4,8 +4,12 @@ function required(name: string): string {
   return value;
 }
 
+export function ownerDatabaseUrl(): string {
+  return process.env.OWNER_DATABASE_URL ?? required("OWNER_DATABASE_DATABASE_URL");
+}
+
 function appRoleUrl(): string {
-  const url = new URL(required("OWNER_DATABASE_URL"));
+  const url = new URL(ownerDatabaseUrl());
   url.username = "paycurb_app";
   url.password = required("APP_DB_PASSWORD");
   return url.toString();

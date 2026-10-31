@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { ownerDatabaseUrl } from "./config";
 
 const directory = join(dirname(fileURLToPath(import.meta.url)), "../../../db/migrations");
 
@@ -28,8 +29,8 @@ export async function migrate(ownerUrl: string, appPassword: string) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const ownerUrl = process.env.OWNER_DATABASE_URL;
+  const ownerUrl = ownerDatabaseUrl();
   const appPassword = process.env.APP_DB_PASSWORD;
-  if (!ownerUrl || !appPassword) throw new Error("OWNER_DATABASE_URL and APP_DB_PASSWORD are required");
+  if (!appPassword) throw new Error("APP_DB_PASSWORD is required");
   await migrate(ownerUrl, appPassword);
 }
