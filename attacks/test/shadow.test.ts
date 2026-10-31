@@ -53,7 +53,7 @@ describe("shadow judge", () => {
     shadow.register("L", lamp, now);
     shadow.decide("L", "approved", now);
     expect(shadow.judge(action(45000, { payload_hash: "bigger" }), { approvalId: "L", captureId: null }, now).decision).toMatchObject({ rule_id: "R15" });
-    expect(shadow.judge(lamp, { approvalId: "L", captureId: null }, now + 16 * 60_000).decision).toMatchObject({ rule_id: "R15" });
+    expect(shadow.judge(lamp, { approvalId: "L", captureId: null }, now + 1441 * 60_000).decision).toMatchObject({ rule_id: "R15" });
     shadow.register("R", action(7600), now);
     shadow.decide("R", "rejected", now);
     expect(shadow.judge(action(7600), { approvalId: "R", captureId: null }, now).decision).toMatchObject({ rule_id: "R15" });

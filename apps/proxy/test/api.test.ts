@@ -105,5 +105,7 @@ describe("dashboard api", () => {
     await toolCall("transfer_funds", {});
     expect((await call("/api/demo/reset", { method: "POST" })).status).toBe(200);
     expect(await (await call("/api/stats")).json()).toMatchObject({ blocked_count: 0 });
+    const held = (await (await call("/api/approvals")).json()) as { status: string }[];
+    expect(held.map((card) => card.status)).toEqual(["pending"]);
   });
 });

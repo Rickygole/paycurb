@@ -146,7 +146,7 @@ describe("approvals", () => {
 
   it("blocks an approval that expired", async () => {
     const approvalId = await approveLamp();
-    minutes(16);
+    minutes(1441);
     expect(await buy(order(75, acme, "LAMP-1", { approval_id: approvalId }))).toMatchObject({ decision: "block", rule_id: "R15" });
     expect(gateway.orders).toHaveLength(0);
   });

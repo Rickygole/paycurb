@@ -9,7 +9,7 @@ import { config } from "./config";
 import { getPool, inTransaction } from "./db";
 import { subscribe } from "./events";
 import { handleMcpRequest } from "./mcp";
-import type { Deps } from "./pipeline";
+import { handleCall, type Deps } from "./pipeline";
 import { activatePolicy, getActivePolicy, listVersions } from "./policy";
 import { rateLimit } from "./ratelimit";
 import { resetDemo } from "./seed";
@@ -26,6 +26,12 @@ async function withClient<T>(work: (client: import("pg").PoolClient) => Promise<
     client.release();
   }
 }
+
+const demoApprovalOrder = {
+  currencyCode: "USD",
+  payee: "acme-office@merchants.example",
+  items: [{ sku: "LAMP-1", name: "Desk Lamp", quantity: 1, itemCost: 75, itemTotal: 75 }],
+};
 
 const clampInt = (raw: string | undefined, fallback: number, max: number) => Math.min(max, Math.max(1, Number.parseInt(raw ?? "", 10) || fallback));
 
@@ -121,6 +127,7 @@ export function createApp({ deps, startAttackRun, compile = compileWithModel }: 
   api.post("/demo/reset", async (c) => {
     if (!config.demoMode) return c.json({ error: "demo mode is off" }, 403);
     await inTransaction(resetDemo);
+    await handleCall(deps, { tool: "create_order", args: demoApprovalOrder, agentId: "demo-agent" });
     return c.json({ ok: true });
   });
 

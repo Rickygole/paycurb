@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
-import { dayLabel, clock, dollars, merchantName } from "@/lib/format";
+import { dayLabel, clock, dollars, merchantName, secondsLeft } from "@/lib/format";
 import { useEventStream } from "@/lib/stream";
 import type { ApprovalCard } from "@/lib/types";
 import { PageHeader } from "../Shell";
@@ -137,7 +137,8 @@ export function Approvals() {
     .filter((card) => card.status === "pending" || touched.includes(card.id))
     .sort((a, b) => a.expires_at.localeCompare(b.expires_at));
   const history = list.filter((card) => card.status !== "pending" && !touched.includes(card.id)).slice(0, 8);
-  const waiting = active.filter((card) => card.status === "pending").length;
+  const waiting = active.filter((card) => card.status === "pending" && secondsLeft(card.expires_at, now) > 0).length;
+  const lapsed = active.filter((card) => card.status === "pending").length - waiting;
 
   return (
     <>
@@ -146,7 +147,7 @@ export function Approvals() {
         description={
           all.data
             ? waiting === 0
-              ? "No held orders right now. The policy sends an order here when it is over your approval line, from a new merchant, or a repeat."
+              ? `No held orders are waiting for you${lapsed > 0 ? `. ${lapsed} expired before anyone decided, and nothing was paid. Reset the demo for a fresh one` : ""}. The policy sends an order here when it is over your approval line, from a new merchant, or a repeat.`
               : `${waiting} held ${waiting === 1 ? "order is" : "orders are"} waiting for you. Nothing is paid until you approve.`
             : "Orders the policy held for you. Nothing is paid until you approve."
         }

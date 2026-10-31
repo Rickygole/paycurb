@@ -19,7 +19,7 @@ export const defaultPolicy: Policy = {
   refunds: "escalate",
   payouts: "block",
   duplicate_window_minutes: 10,
-  approval_ttl_minutes: 15,
+  approval_ttl_minutes: 1440,
 };
 
 export interface ActivePolicy {
