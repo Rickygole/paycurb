@@ -138,6 +138,16 @@ importers:
         version: 5.9.3
 
   attacks:
+    dependencies:
+      '@paycurb/engine':
+        specifier: workspace:*
+        version: link:../packages/engine
+      '@paycurb/llm':
+        specifier: workspace:*
+        version: link:../packages/llm
+      '@paycurb/shared':
+        specifier: workspace:*
+        version: link:../packages/shared
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
