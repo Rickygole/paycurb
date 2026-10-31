@@ -18,14 +18,8 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={copy}
-      aria-label={copied ? "Copied" : label}
-      title={copied ? "Copied" : label}
-      className="inline-flex h-6 w-6 items-center justify-center rounded text-muted hover:bg-surface-3 hover:text-fg"
-    >
-      {copied ? <CheckIcon size={13} className="text-allow" /> : <CopyIcon size={13} />}
+    <button type="button" onClick={copy} aria-label={copied ? "Copied" : label} title={copied ? "Copied" : label} className="copy" data-copied={copied}>
+      {copied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
     </button>
   );
 }
