@@ -53,6 +53,9 @@ importers:
       '@paycurb/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@paycurb/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       ag-grid-community:
         specifier: 36.2.0
         version: 36.2.0
@@ -90,6 +93,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

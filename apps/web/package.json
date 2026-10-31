@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@paycurb/engine": "workspace:*",
+    "@paycurb/shared": "workspace:*",
     "ag-grid-community": "36.2.0",
     "ag-grid-react": "36.2.0",
     "next": "16.4.3",
@@ -28,6 +29,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
 }
