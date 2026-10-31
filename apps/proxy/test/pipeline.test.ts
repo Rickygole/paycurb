@@ -118,6 +118,13 @@ describe("approvals", () => {
     expect(gateway.orders).toHaveLength(0);
   });
 
+  it("evaluates a changed order as a new request while the first approval is still pending", async () => {
+    const first = await buy(order(75, acme, "LAMP-1"));
+    const changed = await buy(order(450, acme, "CUSTOM-1", { approval_id: first.approval_id }));
+    expect(changed).toMatchObject({ decision: "block", rule_id: "R06" });
+    expect(gateway.orders).toHaveLength(0);
+  });
+
   it("blocks a swapped merchant after approval", async () => {
     const approvalId = await approveLamp();
     const swapped = await buy(order(75, "paper-co@merchants.example", "LAMP-1", { approval_id: approvalId }));
