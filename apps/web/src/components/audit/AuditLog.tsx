@@ -39,7 +39,7 @@ const columns: ColDef<AuditRow>[] = [
   {
     field: "decision",
     headerName: "Decision",
-    width: 160,
+    width: 178,
     cellRenderer: DecisionCell,
     filter: true,
     filterValueGetter: (p) => (p.data ? outcomeLabel(p.data.decision) : ""),
