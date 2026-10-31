@@ -6,6 +6,7 @@ const agentUrl = process.env.AGENT_URL || "http://localhost:4100";
 const nextConfig: NextConfig = {
   transpilePackages: ["@paycurb/engine"],
   compress: false,
+  agentRules: false,
   async rewrites() {
     return [
       { source: "/api/:path*", destination: `${proxyUrl}/api/:path*` },
