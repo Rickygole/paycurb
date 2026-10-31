@@ -1,18 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { errorText, postJson, useApi } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
-import type { ActivePolicy, CompileResult, PolicyVersion } from "@/lib/types";
+import { ApiError, errorText, postJson, useApi } from "@/lib/api";
+import { dayLabel, formatDateTime } from "@/lib/format";
+import { policyLines } from "@/lib/policySummary";
+import type { ActivePolicy, CompileResult, Policy, PolicyVersion } from "@/lib/types";
 import { JsonBlock } from "../Drawer";
-import { AlertIcon, CheckIcon, WrenchIcon } from "../icons";
-import { Page, PageHeader } from "../Shell";
+import { AlertIcon, CheckIcon, PencilIcon } from "../icons";
+import { PageHeader } from "../Shell";
 import { ErrorState, Skeleton } from "../states";
 import { ChangeTable } from "./ChangeTable";
 import { VersionHistory } from "./VersionHistory";
 
 const example =
-  "Only buy office supplies from Acme Office Supply and Paper Co. Ask me before anything at or over $100. Never more than $300 in one order and no more than $500 a day. Ask me about refunds and new merchants. Block subscriptions and payouts.";
+  "Spend at most $200 per day. Allow up to $100 per purchase. Ask me before any purchase of $50 or more. Only buy from Acme Office Supply and Paper Co. Never allow payouts.";
+
+const NO_MODEL = "No model is available on this host. Rules can be edited as JSON below.";
+
+function readPolicy(text: string): { policy: Policy | null; problem: string | null } {
+  try {
+    const value = JSON.parse(text);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return { policy: null, problem: "The policy must be one JSON object." };
+    return { policy: value as Policy, problem: null };
+  } catch (problem) {
+    return { policy: null, problem: problem instanceof Error ? problem.message : "This is not valid JSON." };
+  }
+}
+
+function Setting({ id, title, note, aside, children }: { id: string; title: string; note: string; aside?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="setting" aria-labelledby={id}>
+      <div className="setting-label">
+        <h2 id={id} className="section-title">
+          {title}
+        </h2>
+        <p className="section-note">{note}</p>
+        {aside}
+      </div>
+      <div style={{ minWidth: 0 }}>{children}</div>
+    </section>
+  );
+}
 
 export function PolicyEditor() {
   const active = useApi<ActivePolicy>("/api/policy/active");
@@ -23,11 +51,19 @@ export function PolicyEditor() {
   const [compiling, setCompiling] = useState(false);
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [noModel, setNoModel] = useState(false);
+  const [jsonText, setJsonText] = useState<string | null>(null);
   const [activated, setActivated] = useState<number | null>(null);
 
   const text = draft ?? active.data?.source_text ?? "";
   const stale = compiled !== null && compiledText !== text;
-  const noActive = !active.loading && !active.data;
+  const editing = jsonText !== null;
+  const parsed = editing ? readPolicy(jsonText) : null;
+  const candidate = editing ? parsed?.policy ?? null : stale ? null : compiled?.policy ?? null;
+
+  function openJson() {
+    setJsonText(JSON.stringify(compiled?.policy ?? active.data?.policy ?? {}, null, 2));
+  }
 
   async function compile() {
     setCompiling(true);
@@ -37,22 +73,28 @@ export function PolicyEditor() {
       const result = await postJson<CompileResult>("/api/policy/compile", { text });
       setCompiled(result);
       setCompiledText(text);
+      setNoModel(false);
+      setJsonText(null);
     } catch (problem) {
-      setError(errorText(problem));
+      if (problem instanceof ApiError && problem.status >= 500) {
+        setNoModel(true);
+        openJson();
+      } else setError(errorText(problem));
     } finally {
       setCompiling(false);
     }
   }
 
   async function activate() {
-    if (!compiled) return;
+    if (!candidate) return;
     setActivating(true);
     setError(null);
     try {
-      const result = await postJson<{ version: number }>("/api/policy/activate", { policy: compiled.policy, source_text: compiledText });
+      const result = await postJson<{ version: number }>("/api/policy/activate", { policy: candidate, source_text: editing ? text : compiledText });
       setActivated(result.version);
       setCompiled(null);
       setDraft(null);
+      setJsonText(null);
       await Promise.all([active.reload(), versions.reload()]);
     } catch (problem) {
       setError(errorText(problem));
@@ -61,144 +103,186 @@ export function PolicyEditor() {
     }
   }
 
+  const activeStamp = active.data ? (
+    <p className="stamp">
+      <b>Version {active.data.version} is active</b>
+      since {formatDateTime(active.data.created_at)}
+    </p>
+  ) : !active.loading ? (
+    <p className="stamp">
+      <b>No policy is active</b>
+      Every payment is blocked until you activate one.
+    </p>
+  ) : null;
+
+  const why = editing ? (parsed?.problem ? "Fix the JSON to activate." : "Ready to activate.") : !compiled ? "Compile your rules first." : stale ? "The rules changed. Compile again." : "Ready to activate.";
+
   return (
-    <Page>
-      <PageHeader
-        title="Policy"
-        description="Write the spending rules in plain English. The compiler turns them into strict limits, reads them back to you, and nothing changes until you activate them."
-        actions={
-          active.data ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted">
-              <span className="h-2 w-2 rounded-full bg-allow" aria-hidden="true" />
-              Active v{active.data.version} since {formatDateTime(active.data.created_at)}
-            </span>
-          ) : undefined
-        }
-      />
+    <>
+      <PageHeader title="Policy" description="Write what your agent may spend in plain English. Paycurb reads it back as strict limits, and nothing changes until you activate." />
 
-      {active.error && active.status !== 404 && active.data === null && !active.loading && (
-        <div className="mb-4">
-          <ErrorState title="Could not load the active policy" message={active.error} onRetry={active.reload} />
-        </div>
-      )}
+      {active.error && active.status !== 404 && !active.data && !active.loading && <ErrorState title="The active policy did not load" message={active.error} onRetry={active.reload} />}
 
-      {activated !== null && (
-        <p role="status" className="mb-4 flex items-center gap-2 rounded-lg bg-allow-soft px-4 py-3 text-sm font-semibold text-allow">
-          <CheckIcon size={16} />
-          Version {activated} is now active. New payment calls are checked against it.
-        </p>
-      )}
-
-      <section className="card p-5" aria-labelledby="rules-label">
-        <label id="rules-label" htmlFor="rules" className="label text-base!">
-          Rules in plain English
-        </label>
-        {active.loading ? (
-          <Skeleton className="h-32 w-full" />
-        ) : (
-          <textarea
-            id="rules"
-            rows={5}
-            className="input min-h-32 resize-y leading-relaxed"
-            placeholder={example}
-            value={text}
-            onChange={(event) => setDraft(event.target.value)}
-            aria-describedby="rules-hint"
-          />
-        )}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p id="rules-hint" className="text-xs text-muted">
-            {noActive ? "No policy is active yet, so every payment is blocked." : "Editing here does not change anything until you activate."}
-          </p>
-          <div className="flex gap-2">
+      <Setting id="rules-title" title="Your rules" note="Say limits in dollars, name the merchants you trust, and say what needs your approval." aside={activeStamp}>
+        <div className="panel panel-pad">
+          <label htmlFor="rules" className="field-label">
+            Rules in plain English
+          </label>
+          {active.loading ? (
+            <Skeleton style={{ height: 144 }} />
+          ) : (
+            <textarea id="rules" rows={5} className="textarea" placeholder={example} value={text} onChange={(event) => setDraft(event.target.value)} />
+          )}
+          <div className="toolbar">
+            <button type="button" className="btn" onClick={compile} disabled={compiling || text.trim().length === 0}>
+              {compiling ? "Compiling" : "Compile"}
+            </button>
             {draft !== null && active.data && (
-              <button type="button" className="btn-secondary" onClick={() => setDraft(null)} disabled={compiling}>
+              <button type="button" className="btn btn-quiet" onClick={() => setDraft(null)} disabled={compiling}>
                 Revert to active
               </button>
             )}
-            <button type="button" className="btn-primary" onClick={compile} disabled={compiling || text.trim().length === 0}>
-              <WrenchIcon size={15} />
-              {compiling ? "Compiling..." : "Compile"}
-            </button>
+            <span className="grow" />
+            {!editing && (
+              <button type="button" className="link-btn" onClick={openJson}>
+                Edit the JSON instead
+              </button>
+            )}
           </div>
-        </div>
-        {error && (
-          <p role="alert" className="mt-3 flex items-center gap-2 text-sm text-block">
-            <AlertIcon size={15} className="shrink-0" />
-            {error}
-          </p>
-        )}
-      </section>
-
-      {compiling && !compiled && (
-        <div className="mt-6 grid gap-4 lg:grid-cols-2" role="status">
-          <span className="sr-only">Compiling your rules</span>
-          <Skeleton className="h-72" />
-          <Skeleton className="h-72" />
-        </div>
-      )}
-
-      {compiled && (
-        <section aria-labelledby="result-title" className="mt-6 space-y-4">
-          <h2 id="result-title" className="sr-only">
-            Compiled policy
-          </h2>
-          {compiled.questions.length > 0 && (
-            <div className="rounded-xl border-2 border-escalate/40 bg-escalate-soft p-5" role="alert">
-              <p className="flex items-center gap-2 text-base font-bold text-escalate">
-                <AlertIcon size={18} />
-                The compiler has {compiled.questions.length === 1 ? "a question" : `${compiled.questions.length} questions`} for you
-              </p>
-              <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-[15px]">
-                {compiled.questions.map((question) => (
-                  <li key={question}>{question}</li>
-                ))}
-              </ol>
-              <p className="mt-3 text-sm text-muted">Answer by editing your rules and compiling again. If you activate now, the strict defaults shown below apply.</p>
-            </div>
+          {noModel && (
+            <p role="alert" className="notice" style={{ marginTop: 16, color: "var(--ink)", fontWeight: 500 }}>
+              <AlertIcon size={16} style={{ color: "var(--held-ink)", flex: "none" }} />
+              {NO_MODEL}
+            </p>
           )}
-          {stale && (
-            <p role="status" className="flex items-center gap-2 text-sm text-escalate">
-              <AlertIcon size={15} />
+          {error && (
+            <p role="alert" className="notice" style={{ marginTop: 16, color: "var(--block-ink)" }}>
+              <AlertIcon size={16} style={{ flex: "none" }} />
+              {error}
+            </p>
+          )}
+        </div>
+      </Setting>
+
+      <Setting
+        id="enforce-title"
+        title="What Paycurb will enforce"
+        note={editing ? "The JSON is checked against the policy schema when you activate." : compiled ? "Read this back before you activate. Any question below means a strict default was used." :"The rules in force now. Compile to see what a change would do."}
+      >
+        <div className="panel panel-pad" aria-busy={compiling}>
+          {compiled && compiled.questions.length > 0 && !editing && (
+            <ul className="questions" role="alert">
+              {compiled.questions.map((question) => (
+                <li key={question}>
+                  <span className="status status-held">Question</span>
+                  <span>{question}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {stale && !editing && (
+            <p role="status" className="notice" style={{ marginBottom: 16, color: "var(--held-ink)" }}>
+              <AlertIcon size={16} />
               The rules changed since this compile. Compile again before activating.
             </p>
           )}
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="card p-5">
-              <h3 className="mb-3 font-semibold">What this policy will do</h3>
-              <ul className="space-y-2">
-                {compiled.readback.map((sentence) => (
-                  <li key={sentence} className="flex gap-2.5 text-sm leading-relaxed">
-                    <CheckIcon size={15} className="mt-0.5 shrink-0 text-allow" />
-                    <span>{sentence}</span>
-                  </li>
-                ))}
-              </ul>
+          {compiling ? (
+            <div className="pair" role="status">
+              <span className="sr-only">Compiling your rules</span>
+              <Skeleton style={{ height: 240 }} />
+              <Skeleton style={{ height: 240 }} />
             </div>
-            <div className="card min-w-0 p-5">
-              <h3 className="mb-3 font-semibold">Policy JSON</h3>
-              <JsonBlock value={compiled.policy} label="Compiled policy JSON" />
-            </div>
-          </div>
-          {active.data && (
-            <div className="card p-5">
-              <h3 className="mb-3 font-semibold">Changes from active v{active.data.version}</h3>
-              <ChangeTable before={active.data.policy} after={compiled.policy} beforeLabel={`Active v${active.data.version}`} afterLabel="New" />
+          ) : (
+            <div className="pair">
+              <div>
+                <h3 className="field-label">{compiled && !editing ? "Read back" : `Active v${active.data?.version ?? ""}`.trim()}</h3>
+                {compiled && !editing ? (
+                  <ReadBack lines={compiled.readback} />
+                ) : active.data ? (
+                  <ReadBack lines={policyLines(active.data.policy)} />
+                ) : (
+                  <p className="muted">No policy is active yet.</p>
+                )}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                {editing ? (
+                  <>
+                    <label htmlFor="policy-json" className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <PencilIcon size={14} />
+                      Policy JSON
+                    </label>
+                    <textarea id="policy-json" className="textarea json-editor" spellCheck={false} value={jsonText} onChange={(event) => setJsonText(event.target.value)} aria-describedby="json-check" />
+                    <p id="json-check" className="small" style={{ marginTop: 8, color: parsed?.problem ? "var(--block-ink)" : "var(--muted)" }}>
+                      {parsed?.problem ?? "Valid JSON. Missing keys get the strict defaults."}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="field-label">Policy JSON</h3>
+                    <JsonBlock value={compiled?.policy ?? active.data?.policy ?? {}} label="Policy JSON" />
+                  </>
+                )}
+              </div>
             </div>
           )}
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <button type="button" className="btn-secondary" onClick={() => setCompiled(null)} disabled={activating}>
-              Discard
-            </button>
-            <button type="button" className="btn-primary" onClick={activate} disabled={activating || stale}>
-              <CheckIcon size={15} />
-              {activating ? "Activating..." : "Confirm and Activate"}
+          {active.data && candidate && (
+            <div style={{ marginTop: 20 }}>
+              <h3 className="field-label">Changes from active v{active.data.version}</h3>
+              <ChangeTable before={active.data.policy} after={candidate} beforeLabel={`Active v${active.data.version}`} afterLabel="New" />
+            </div>
+          )}
+          <div className="toolbar" style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--rule)" }}>
+            <p className="muted grow" role="status">
+              {activated !== null ? (
+                <span style={{ color: "var(--ink)", fontWeight: 500 }}>
+                  <CheckIcon size={16} style={{ display: "inline", verticalAlign: "-3px", marginRight: 6, color: "var(--accent)" }} />
+                  Version {activated} is active. New payment calls are checked against it.
+                </span>
+              ) : (
+                why
+              )}
+            </p>
+            {(compiled || editing) && (
+              <button
+                type="button"
+                className="btn btn-quiet"
+                onClick={() => {
+                  setCompiled(null);
+                  setJsonText(null);
+                }}
+                disabled={activating}
+              >
+                Discard
+              </button>
+            )}
+            <button type="button" className="btn btn-primary" onClick={activate} disabled={activating || !candidate}>
+              {activating ? "Activating" : "Activate"}
             </button>
           </div>
-        </section>
-      )}
+        </div>
+      </Setting>
 
-      <VersionHistory versions={versions.data} active={active.data} error={versions.error} onRetry={versions.reload} />
-    </Page>
+      <Setting
+        id="history-title"
+        title="Version history"
+        note="Every policy you activated, newest first. Open one to see its rules and how it differs from the active one."
+        aside={versions.data?.length ? <p className="stamp">{versions.data.length} versions, the first on {dayLabel(versions.data.reduce((first, entry) => (entry.created_at < first ? entry.created_at : first), versions.data[0].created_at))}</p> : null}
+      >
+        <VersionHistory versions={versions.data} active={active.data} error={versions.error} onRetry={versions.reload} />
+      </Setting>
+    </>
+  );
+}
+
+function ReadBack({ lines }: { lines: string[] }) {
+  return (
+    <ul className="readback">
+      {lines.map((line) => (
+        <li key={line}>
+          <CheckIcon size={15} />
+          <span>{line}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
