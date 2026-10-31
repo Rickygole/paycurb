@@ -7,5 +7,8 @@
     "migrate": "pnpm --filter @paycurb/proxy migrate",
     "proxy": "pnpm --filter @paycurb/proxy start",
     "attacks": "pnpm --filter @paycurb/attacks start"
+  },
+  "devDependencies": {
+    "esbuild": "~0.25.12"
   }
 }
