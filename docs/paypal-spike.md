@@ -1,6 +1,6 @@
 # PayPal spike (Day 1)
 
-Status: docs research done 2026-10-30. Nothing here has been run against the sandbox yet.
+Status: docs research and a live sandbox run done 2026-10-30, using a dedicated sandbox REST app named AgentLock.
 
 ## Confirmed from the official repo README (github.com/paypal/agent-toolkit)
 
@@ -19,12 +19,17 @@ Status: docs research done 2026-10-30. Nothing here has been run against the san
 - Run command `npx -y @paypal/mcp --tools=all`. Confirm the package name on npm before use.
 - Remote endpoint `https://mcp.sandbox.paypal.com/sse`.
 
-## Open questions to answer with a real run
+## Live results (scripts/spike.mjs)
 
-1. Does `create_order` return an approval link, and does `pay_order` fail until the buyer approves? Orders v2 normally needs buyer approval before capture.
-2. Which payment source (test card) completes without a redirect on this sandbox app?
-3. What id does a completed capture return for `paypal_ref`?
-4. Are refunds available in the sandbox?
+1. OAuth with client credentials returns 200 against api-m.sandbox.paypal.com.
+2. Order create returns 201 CREATED with a payer-action approval link. Capture before approval returns 422 ORDER_NOT_APPROVED, so the redirect flow cannot be automated.
+3. Order create with `payment_source.card` (test card 4111111111111111) returns 201 and the order is already COMPLETED, with a capture id at `purchase_units[0].payments.captures[0].id`. No redirect. This is option 1 of the buyer approval fallbacks, so the proxy uses it. The capture id is the `paypal_ref`.
+4. Refund of that capture via `/v2/payments/captures/{id}/refund` returns 201 COMPLETED. Refunds work in the sandbox.
+5. The response does not echo a payee. The proxy must set the payee itself and map it to the merchants registry, never trust the agent.
+
+Consequence: create and capture happen in one call on the card path, so the engine decides once, at create time. Treat `pay_order` as a no-op or a status read on this path.
+
+Still open: whether the MCP server (as opposed to REST) can pass a card payment source through `create_order`. If not, the proxy calls REST directly and keeps the same tool names, per the decision rule.
 
 ## Decision rule
 
