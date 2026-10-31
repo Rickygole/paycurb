@@ -1,16 +1,15 @@
 "use client";
 
 import type { CustomCellRendererProps } from "ag-grid-react";
-import { shortHash } from "@/lib/format";
 import type { AuditRow } from "@/lib/types";
-import { CopyButton } from "../CopyButton";
 import { DecisionBadge } from "../DecisionBadge";
+import { HashValue } from "../feed/DecisionDrawer";
 
 export function DecisionCell({ data }: CustomCellRendererProps<AuditRow>) {
   if (!data) return null;
   return (
-    <span className="flex h-full items-center">
-      <DecisionBadge decision={data.decision} size="sm" />
+    <span style={{ display: "flex", height: "100%", alignItems: "center" }}>
+      <DecisionBadge decision={data.decision} />
     </span>
   );
 }
@@ -18,11 +17,12 @@ export function DecisionCell({ data }: CustomCellRendererProps<AuditRow>) {
 export function HashCell({ data }: CustomCellRendererProps<AuditRow>) {
   if (!data) return null;
   return (
-    <span className="flex h-full items-center gap-1">
-      <span className="font-mono text-xs" title={data.entry_hash}>
-        {shortHash(data.entry_hash)}
-      </span>
-      <CopyButton text={data.entry_hash} label={`Copy entry hash for seq ${data.seq}`} />
+    <span style={{ display: "flex", height: "100%", alignItems: "center" }}>
+      <HashValue value={data.entry_hash} label={`entry hash for entry ${data.seq}`} />
     </span>
   );
+}
+
+export function MissingCell() {
+  return <span className="missing" role="img" aria-label="None" />;
 }
