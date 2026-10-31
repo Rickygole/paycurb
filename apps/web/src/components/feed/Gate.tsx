@@ -192,10 +192,16 @@ export function Gate({ items, status, policyVersion }: { items: Feed[] | null; s
           <span className="node-label">
             <b>Paycurb policy{policyVersion ? ` v${policyVersion}` : ""}</b>
             <span className="node-sub">
-              <span className="num" style={{ opacity: caption ? 0 : 1 }}>
-                {items ? `${count(tally.block)} stopped · ${count(tally.escalate)} held · ${count(tally.allow)} passed of the last ${count(total)}` : "Reading the latest calls"}
+              <span className="num node-count" data-hidden={!!caption}>
+                {items ? (
+                  <>
+                    {count(tally.block)} stopped · {count(tally.escalate)} held · {count(tally.allow)} passed<span className="wide-only"> of the last {count(total)}</span>
+                  </>
+                ) : (
+                  "Reading the latest calls"
+                )}
               </span>
-              <span className="gate-caption" data-tone={caption?.tone} style={{ opacity: caption ? 1 : 0 }} aria-live="polite">
+              <span className="gate-caption" data-tone={caption?.tone} data-shown={!!caption} aria-live="polite">
                 {caption?.text ?? ""}
               </span>
             </span>

@@ -1054,7 +1054,25 @@ dialog.drawer[open]::backdrop {
 
 .node-sub > * {
   grid-area: 1 / 1;
-  transition: opacity 200ms ease;
+}
+
+.node-count {
+  transition: opacity 140ms ease 180ms;
+}
+
+.node-count[data-hidden="true"] {
+  opacity: 0;
+  transition-delay: 0ms;
+}
+
+.gate-caption {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.gate-caption[data-shown="true"] {
+  opacity: 1;
+  transition-delay: 160ms;
 }
 
 .gate-caption {
