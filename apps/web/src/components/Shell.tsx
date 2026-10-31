@@ -1,30 +1,57 @@
 "use client";
 
+import "./ledger.css";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api, postJson, useApi } from "@/lib/api";
+import { bump, STATS_EVENT } from "@/lib/motion";
 import type { Stats } from "@/lib/types";
-import { ActivityIcon, BotIcon, FileTextIcon, InboxIcon, ListIcon, LogOutIcon, ShieldIcon, TargetIcon } from "./icons";
+import { ChevronDownIcon, GateMark, LogOutIcon, MenuIcon, XIcon } from "./icons";
 import { ThemeToggle } from "./ThemeToggle";
-import { Skeleton } from "./states";
 
 const nav = [
-  { href: "/feed", label: "Live Feed", Icon: ActivityIcon },
-  { href: "/approvals", label: "Approvals", Icon: InboxIcon },
-  { href: "/policy", label: "Policy", Icon: FileTextIcon },
-  { href: "/audit", label: "Audit Log", Icon: ListIcon },
-  { href: "/attacks", label: "Attack Results", Icon: TargetIcon },
-  { href: "/agent", label: "Demo Agent", Icon: BotIcon },
+  { href: "/feed", label: "Feed" },
+  { href: "/approvals", label: "Approvals" },
+  { href: "/policy", label: "Policy" },
+  { href: "/audit", label: "Audit" },
+  { href: "/attacks", label: "Attacks" },
 ];
 
-function PendingCount() {
-  const { data } = useApi<Stats>("/api/stats", 5000);
-  if (!data || data.pending_approvals === 0) return null;
+function PendingPill({ count }: { count: number | null }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const previous = useRef(count);
+
+  useEffect(() => {
+    if (previous.current !== null && count !== null && count !== previous.current) bump(ref.current);
+    previous.current = count;
+  }, [count]);
+
+  if (!count) return null;
   return (
-    <span className="ml-auto rounded-full bg-escalate-soft px-1.5 py-px text-xs font-semibold text-escalate num" aria-label={`${data.pending_approvals} pending`}>
-      {data.pending_approvals}
+    <span ref={ref} className="count-pill num" aria-label={`${count} waiting for you`}>
+      {count}
     </span>
+  );
+}
+
+function usePending(enabled: boolean) {
+  const stats = useApi<Stats>(enabled ? "/api/stats" : null, enabled ? 5000 : undefined);
+  const reload = stats.reload;
+  useEffect(() => {
+    const listener = () => reload();
+    window.addEventListener(STATS_EVENT, listener);
+    return () => window.removeEventListener(STATS_EVENT, listener);
+  }, [reload]);
+  return enabled ? (stats.data?.pending_approvals ?? null) : null;
+}
+
+export function Brand() {
+  return (
+    <Link href="/feed" className="brand" aria-label="Paycurb, live feed">
+      <GateMark size={22} className="mark" />
+      Paycurb
+    </Link>
   );
 }
 
@@ -32,6 +59,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+  const pending = usePending(checked);
+  const sheet = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     api<{ ok: boolean }>("/api/session")
@@ -42,88 +71,124 @@ export function Shell({ children }: { children: ReactNode }) {
       .catch(() => setChecked(true));
   }, [router]);
 
+  useEffect(() => {
+    sheet.current?.hidePopover?.();
+  }, [pathname]);
+
   async function signOut() {
     await postJson("/api/logout").catch(() => null);
     router.replace("/login");
   }
 
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
   return (
-    <div className="flex min-h-dvh flex-col md:flex-row">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:shadow-pop">
+    <div className="ledger">
+      <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <aside className="flex shrink-0 flex-col border-line bg-surface md:sticky md:top-0 md:h-dvh md:w-60 md:border-r max-md:border-b">
-        <div className="flex items-center gap-2.5 px-5 py-4 md:py-5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-contrast">
-            <ShieldIcon size={18} strokeWidth={2.25} />
-          </span>
-          <div className="leading-tight">
-            <p className="text-[15px] font-bold tracking-tight">Paycurb</p>
-            <p className="text-xs text-muted">Payment firewall</p>
+      <header className="topbar">
+        <div className="col topbar-inner">
+          <Brand />
+          <nav aria-label="Main" className="nav wide-only">
+            {nav.map(({ href, label }) => (
+              <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined} className="nav-link">
+                {label}
+                {href === "/approvals" && <PendingPill count={pending} />}
+              </Link>
+            ))}
+          </nav>
+          <div className="bar-end">
+            <Link href="/agent" className="btn btn-primary btn-sm wide-only" aria-current={isActive("/agent") ? "page" : undefined}>
+              Run the agent
+            </Link>
+            <span className="wide-only">
+              <ThemeToggle />
+            </span>
+            <button type="button" className="btn btn-quiet btn-sm wide-only" popoverTarget="account-menu" aria-haspopup="menu">
+              Owner
+              <ChevronDownIcon size={15} />
+            </button>
+            <Link href="/approvals" className="phone-only" aria-label={pending ? `${pending} orders waiting for you` : "Approvals"}>
+              <PendingPill count={pending} />
+            </Link>
+            <button type="button" className="btn btn-outline btn-sm phone-only" popoverTarget="nav-sheet" aria-haspopup="dialog">
+              <MenuIcon size={16} />
+              Menu
+            </button>
           </div>
         </div>
-        <nav aria-label="Main" className="px-3 max-md:overflow-x-auto max-md:pb-2">
-          <ul className="flex gap-0.5 md:flex-col">
-            {nav.map(({ href, label, Icon }) => {
-              const active = pathname === href || pathname.startsWith(`${href}/`);
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    aria-current={active ? "page" : undefined}
-                    className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                      active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface-2 hover:text-fg"
-                    }`}
-                  >
-                    <Icon size={16} />
-                    {label}
-                    {href === "/approvals" && checked && <PendingCount />}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+      </header>
+
+      <div id="account-menu" popover="auto" role="menu" aria-label="Account" className="menu">
+        <p className="menu-label">Signed in as the owner</p>
+        <ThemeToggle variant="row" />
+        <div className="menu-rule" />
+        <button type="button" role="menuitem" className="menu-item" onClick={signOut}>
+          <LogOutIcon size={16} />
+          Sign out
+        </button>
+      </div>
+
+      <div id="nav-sheet" ref={sheet} popover="auto" role="dialog" aria-label="Menu" className="sheet">
+        <div className="sheet-head">
+          <Brand />
+          <button type="button" className="btn btn-icon" popoverTarget="nav-sheet" popoverTargetAction="hide" aria-label="Close menu">
+            <XIcon size={18} />
+          </button>
+        </div>
+        <nav aria-label="Main">
+          {nav.map(({ href, label }) => (
+            <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined} className="sheet-link">
+              <span>{label}</span>
+              {href === "/approvals" && <PendingPill count={pending} />}
+            </Link>
+          ))}
         </nav>
-        <div className="mt-auto flex gap-0.5 border-t border-line px-3 py-2 md:flex-col md:py-3">
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={signOut}
-            className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted md:w-full hover:bg-surface-2 hover:text-fg"
-          >
+        <div className="sheet-actions">
+          <Link href="/agent" className="btn btn-primary">
+            Run the agent
+          </Link>
+          <ThemeToggle variant="row" />
+          <button type="button" className="menu-item" onClick={signOut}>
             <LogOutIcon size={16} />
             Sign out
           </button>
         </div>
-      </aside>
-      <main id="main" className="min-w-0 flex-1">
-        {checked ? (
-          children
-        ) : (
-          <div className="mx-auto max-w-6xl space-y-4 p-6" role="status">
-            <span className="sr-only">Checking your session</span>
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-28 w-full" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        )}
+      </div>
+
+      <main id="main" className="col page">
+        {checked ? children : <SessionCheck />}
       </main>
     </div>
   );
 }
 
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+function SessionCheck() {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        {description && <p className="mt-1 max-w-xl text-sm text-muted">{description}</p>}
+    <div role="status" style={{ display: "grid", gap: 16 }}>
+      <span className="sr-only">Checking your session</span>
+      <span className="sk" style={{ height: 34, width: 220 }} />
+      <span className="sk" style={{ height: 132 }} />
+      <span className="sk" style={{ height: 320 }} />
+    </div>
+  );
+}
+
+export function PageHeader({ title, description, actions, id }: { title: string; description?: ReactNode; actions?: ReactNode; id?: string }) {
+  return (
+    <header className="title-row">
+      <div style={{ minWidth: 0 }}>
+        <h1 id={id} className="title">
+          {title}
+        </h1>
+        {description && <p className="lede">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>{actions}</div>}
     </header>
   );
 }
 
-export function Page({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
-  return <div className={`mx-auto w-full px-5 py-6 md:px-8 md:py-8 ${wide ? "max-w-[1600px]" : "max-w-6xl"}`}>{children}</div>;
+export function Page({ children }: { children: ReactNode; wide?: boolean }) {
+  return <>{children}</>;
 }
