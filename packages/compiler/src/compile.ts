@@ -2,6 +2,7 @@ import type { Policy } from "@paycurb/engine";
 import type { LlmClient, Message, Reply } from "@paycurb/llm";
 import { z } from "zod";
 import { withStrictDefaults } from "./defaults";
+import { toPolicyFields, type Extraction } from "./extraction";
 import { withInferredCategories } from "./categories";
 import { readback } from "./readback";
 import { policySchema } from "./schema";
@@ -29,9 +30,9 @@ function toolInput(reply: Reply): Record<string, unknown> {
 }
 
 function build(reply: Reply): Compiled {
-  const { questions, ...fields } = toolInput(reply);
-  const asked = questionsSchema.parse(questions ?? []);
-  const policy = policySchema.parse(withInferredCategories(withStrictDefaults(fields)));
+  const extraction = toolInput(reply) as Extraction;
+  const asked = questionsSchema.parse(extraction.questions ?? []);
+  const policy = policySchema.parse(withInferredCategories(withStrictDefaults(toPolicyFields(extraction))));
   return { policy, readback: readback(policy), questions: asked };
 }
 
