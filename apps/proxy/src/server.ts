@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { startAttackRun } from "../../../attacks/src/start";
 import { createApp } from "./api";
 import { config } from "./config";
 import { assertRestrictedRole, inTransaction } from "./db";
@@ -11,6 +12,6 @@ await inTransaction(async (client) => {
   await ensureDefaultPolicy(client);
 });
 
-const app = createApp({ deps: { gateway: createPayPalGateway(), now: () => new Date() } });
+const app = createApp({ deps: { gateway: createPayPalGateway(), now: () => new Date() }, startAttackRun });
 serve({ fetch: app.fetch, port: config.port });
 console.log(`paycurb proxy listening on ${config.port}`);
