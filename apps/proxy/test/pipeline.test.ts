@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { verifyChain } from "../src/audit";
 import { decideApproval } from "../src/approvals";
 import { closePool, getPool, inTransaction } from "../src/db";
-import { handleCall, type Deps } from "../src/pipeline";
+import { handleCall, maxPendingApprovals, type Deps } from "../src/pipeline";
 import { activatePolicy, defaultPolicy } from "../src/policy";
 import { seedRegistry } from "../src/seed";
 import { dailySpentCents } from "../src/state";
@@ -51,6 +51,19 @@ describe("allow, escalate and block", () => {
     expect(result).toMatchObject({ decision: "escalate", rule_id: "R14" });
     expect(result.approval_id).toBeTruthy();
     expect(gateway.orders).toHaveLength(0);
+  });
+
+  it("stops creating approvals once the pending cap is reached", async () => {
+    await useStrictPolicy({ per_transaction_limit_cents: 1_000_000, daily_limit_cents: 1_000_000, merchant_window_limit: { cents: 1_000_000, window_minutes: 60 }, max_quantity_per_line: 100 });
+    const lamps = (quantity: number) => ({ currencyCode: "USD", payee: acme, items: [{ sku: "LAMP-1", name: "Item", quantity, itemCost: 75, itemTotal: 75 * quantity }] });
+    for (let index = 1; index <= maxPendingApprovals; index++) {
+      expect(await buy(lamps(index))).toMatchObject({ decision: "escalate" });
+    }
+    const over = await buy(lamps(maxPendingApprovals + 1));
+    expect(over).toMatchObject({ decision: "block", rule_id: "R16" });
+    expect(over.approval_id).toBeUndefined();
+    const count = await getPool().query("SELECT COUNT(*)::int AS total FROM approvals WHERE status = 'pending'");
+    expect(count.rows[0].total).toBe(maxPendingApprovals);
   });
 
   it("blocks the injected watch purchase and never calls PayPal", async () => {

@@ -13,6 +13,7 @@ import { classify } from "./tools";
 import { redact } from "./redact";
 
 const SPEND_LOCK = 1;
+export const maxPendingApprovals = 50;
 const FAILED_STATUSES = ["FAILED", "DECLINED", "VOIDED", "DENIED"];
 
 export interface Deps {
@@ -137,6 +138,8 @@ async function stage(deps: Deps, prepared: Prepared, agentId: string): Promise<S
     const decision = evaluate(action, policy, state);
     if (decision.decision === "block") return persistFinal(client, action, decision, version);
     if (decision.decision === "escalate") {
+      const pending = await client.query("SELECT COUNT(*)::int AS total FROM approvals WHERE status = 'pending' AND expires_at > $1", [now.toISOString()]);
+      if (pending.rows[0].total >= maxPendingApprovals) return persistFinal(client, action, blockOf("R16", `Blocked: ${maxPendingApprovals} approvals are already waiting for the owner`), version);
       await recordDecision(client, action, decision, version);
       const approvalId = await createApproval(client, action, decision.rule_id, policy.approval_ttl_minutes, now);
       publish({ type: "approval", id: approvalId });
