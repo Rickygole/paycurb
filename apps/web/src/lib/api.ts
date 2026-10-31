@@ -39,6 +39,7 @@ export function useApi<T>(path: string, refreshMs?: number) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState(0);
 
   const load = useCallback(
     () =>
@@ -46,10 +47,12 @@ export function useApi<T>(path: string, refreshMs?: number) {
         (next) => {
           setData(next);
           setError(null);
+          setStatus(200);
           setLoading(false);
         },
         (problem) => {
           setError(errorText(problem));
+          setStatus(problem instanceof ApiError ? problem.status : 0);
           setLoading(false);
         },
       ),
@@ -63,5 +66,5 @@ export function useApi<T>(path: string, refreshMs?: number) {
     return () => clearInterval(timer);
   }, [load, refreshMs]);
 
-  return { data, error, loading, reload: load, setData };
+  return { data, error, status, loading, reload: load, setData };
 }
