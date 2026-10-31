@@ -423,6 +423,10 @@
   transform: none;
 }
 
+.sheet::backdrop {
+  background: var(--backdrop);
+}
+
 @starting-style {
   .sheet:popover-open {
     opacity: 0;
