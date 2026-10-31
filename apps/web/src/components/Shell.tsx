@@ -188,7 +188,3 @@ export function PageHeader({ title, description, actions, id }: { title: string;
     </header>
   );
 }
-
-export function Page({ children }: { children: ReactNode; wide?: boolean }) {
-  return <>{children}</>;
-}
