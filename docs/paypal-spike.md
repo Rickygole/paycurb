@@ -29,7 +29,9 @@ Status: docs research and a live sandbox run done 2026-10-30, using a dedicated 
 
 Consequence: create and capture happen in one call on the card path, so the engine decides once, at create time. Treat `pay_order` as a no-op or a status read on this path.
 
-Still open: whether the MCP server (as opposed to REST) can pass a card payment source through `create_order`. If not, the proxy calls REST directly and keeps the same tool names, per the decision rule.
+MCP server check (@paypal/mcp 1.8.1, `--tools=all`, sandbox mode, token auth): 28 tools in this version. Its `create_order` takes `currencyCode`, `items[] {name, itemCost, itemTotal, quantity}`, discount, shipping and return URLs. It has no payment source and no payee field, so every order needs the buyer redirect and `pay_order` (input: `id` only) fails until the buyer approves. `create_refund` takes `capture_id`, `amount`, `invoice_id`, `note_to_payer`.
+
+Decision: the proxy exposes the same tool names and the same `create_order` input shape to the agent, and calls the REST Orders API directly with the test card payment source. The agent-facing schema keeps `itemCost` and `itemTotal` per line, so the engine's stated total versus computed total check (R02) applies as is.
 
 ## Decision rule
 
