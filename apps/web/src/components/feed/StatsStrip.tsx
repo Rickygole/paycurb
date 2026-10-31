@@ -15,14 +15,11 @@ function useTicker(value: number) {
     const start = from.current;
     from.current = value;
     if (start === value) return;
-    if (reducedMotion()) {
-      setShown(value);
-      return;
-    }
+    const duration = reducedMotion() ? 1 : 600;
     const began = performance.now();
     let frame = 0;
     const step = (now: number) => {
-      const t = Math.min(1, (now - began) / 600);
+      const t = Math.min(1, (now - began) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
       setShown(Math.round(start + (value - start) * eased));
       if (t < 1) frame = requestAnimationFrame(step);
