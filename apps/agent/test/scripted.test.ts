@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { presets } from "../src/presets";
 import { runAgent } from "../src/run";
 import type { AgentEvent } from "../src/run";
-import { scriptedLlm, scriptedMode } from "../src/scripted";
+import { closing, scriptedLlm, scriptedMode } from "../src/scripted";
 import { taskFromBody } from "../src/app";
 
 async function replay(preset: string, respond: (name: string, input: Record<string, unknown>) => string) {
@@ -30,6 +30,20 @@ describe("scripted replay", () => {
   it("orders the lamp for the approval preset", async () => {
     const order = calls(await replay("approval", () => "{}")).find((e) => e.name === "create_order");
     expect(order?.input).toMatchObject({ items: [{ sku: "LAMP-1", itemTotal: 75 }] });
+  });
+
+  it("reports the real decision in the closing message", async () => {
+    const lastMessage = async (preset: string, output: object) => {
+      const events = await replay(preset, (name) => (name === "create_order" ? JSON.stringify(output) : "{}"));
+      return events.flatMap((e) => (e.type === "message" ? [e.text] : [])).at(-1) ?? "";
+    };
+    expect(await lastMessage("approval", { decision: "escalate", rule_id: "R14", approval_id: "abc" })).toContain("held this order under rule R14");
+    const blocked = await lastMessage("approval", { decision: "block", rule_id: "R09", reason: "Blocked: too many purchases in the last hour" });
+    expect(blocked).toContain("blocked this order under rule R09: too many purchases in the last hour");
+    expect(blocked).not.toContain("held");
+    expect(await lastMessage("normal", { decision: "allow", rule_id: "R99", order: { status: "COMPLETED" } })).toContain("executed at PayPal (COMPLETED)");
+    expect(await lastMessage("injection", { decision: "block", rule_id: "R04", reason: "Blocked: unknown" })).toContain("blocked");
+    expect(closing("not json")).toContain("did not return a decision");
   });
 
   it("browses the hostile page and then attempts the watch purchase", async () => {

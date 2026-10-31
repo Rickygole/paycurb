@@ -33,7 +33,7 @@ Tools (anything else is blocked):
 - `get_order` input `{ id: string }`.
 - `create_refund` input `{ capture_id: string, amount: number, note_to_payer?: string }`.
 
-Every tool result is JSON text: `{ decision: "allow" | "escalate" | "block", rule_id, reason, order?: { id, status, capture_id }, approval_id?, refund?: { id, status } }`. After `escalate` the agent tells the user the purchase awaits owner approval. Once approved, the agent repeats the identical call and the proxy executes it. Blocked calls never reach PayPal.
+Every tool result is JSON text: `{ decision: "allow" | "escalate" | "block", rule_id, reason, order?: { id, status, capture_id }, approval_id?, refund?: { id, status } }`. After `escalate` the agent tells the user the purchase awaits owner approval. When the owner approves, the proxy executes the held order itself; if the agent repeats the identical call with the approval_id it gets the same result and nothing is charged twice. Blocked calls never reach PayPal.
 
 ## HTTP API on the proxy
 

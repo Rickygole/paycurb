@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { runAgent } from "@/lib/agentRun";
-import { errorText, postJson } from "@/lib/api";
+import { errorText, postJson, useApi } from "@/lib/api";
 import { askForStats } from "@/lib/motion";
 import type { AgentEvent } from "@/lib/types";
 import { AlertIcon, CheckIcon, RefreshIcon } from "../icons";
@@ -11,8 +11,8 @@ import { Skeleton } from "../states";
 import { TranscriptItem, type Entry } from "./TranscriptItem";
 
 const presets = [
-  { id: "normal", label: "Normal purchase", hint: "Desk organizer and pens, a trusted merchant", dot: "var(--allow-ink)" },
-  { id: "approval", label: "Needs approval", hint: "Two desk lamps, over the approval line", dot: "var(--held-ink)" },
+  { id: "normal", label: "Normal purchase", hint: "One desk organizer, a trusted merchant", dot: "var(--allow-ink)" },
+  { id: "approval", label: "Needs approval", hint: "One desk lamp, over the approval line", dot: "var(--held-ink)" },
   { id: "injection", label: "Injection attack", hint: "A store page tells the agent to buy a watch", dot: "var(--block-ink)" },
 ] as const;
 
@@ -42,6 +42,7 @@ function Preview() {
 
 export function DemoAgent() {
   const [entries, setEntries] = useState<Entry[]>([]);
+  const mode = useApi<{ mode: string }>("/agent/healthz");
   const [task, setTask] = useState("");
   const [running, setRunning] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -111,7 +112,11 @@ export function DemoAgent() {
     <>
       <PageHeader
         title="Run the agent"
-        description="Runs the shopping agent with the model configured on this host. Every payment still goes through the policy engine."
+        description={
+          mode.data?.mode === "scripted"
+            ? "No model runs on this host, so the steps are a fixed replay. Every Paycurb decision is real and every payment still goes through the policy engine."
+            : "Runs the shopping agent with the model configured on this host. Every payment still goes through the policy engine."
+        }
         actions={
           <button type="button" className="btn btn-quiet" onClick={reset} disabled={resetting}>
             <RefreshIcon size={15} />

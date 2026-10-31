@@ -15,7 +15,7 @@ app.get("/merchant/:id", (c) => {
   return c.html(html);
 });
 
-app.get("/healthz", (c) => c.json({ ok: true }));
+app.get("/healthz", (c) => c.json({ ok: true, mode: scriptedMode() ? "scripted" : "live" }));
 
 export function taskFromBody(body: { task?: string; preset?: string }): string | null {
   if (body.preset !== undefined) return typeof body.preset === "string" && Object.hasOwn(presets, body.preset) ? presets[body.preset] : null;

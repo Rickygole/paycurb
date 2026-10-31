@@ -7,7 +7,7 @@ const clockTime = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2
 const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 const whole = new Intl.NumberFormat("en-US");
 
-export const KNOWN_TOOLS = ["create_order", "get_order", "create_refund"];
+export const KNOWN_TOOLS = ["create_order", "get_order", "create_refund", "approval"];
 
 export const dollars = (cents: number) => usd.format(cents / 100);
 export const count = (value: number) => whole.format(value);
@@ -26,6 +26,10 @@ export function merchantName(id: string | null, given?: string | null) {
   return merchants.find((merchant) => merchant.id === id)?.display_name ?? id;
 }
 
+export function auditMerchant(row: { kind: string; merchant_id: string | null }) {
+  return row.merchant_id === null && ["policy", "admin"].includes(row.kind) ? "None" : merchantName(row.merchant_id);
+}
+
 export function productName(sku: string) {
   return products.find((product) => product.id === sku)?.name ?? sku;
 }
@@ -35,6 +39,7 @@ export function secondsLeft(iso: string, nowMs: number) {
 }
 
 export function countdown(seconds: number) {
+  if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${String(Math.floor((seconds % 3600) / 60)).padStart(2, "0")}m`;
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;
   return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;

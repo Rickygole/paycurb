@@ -39,6 +39,11 @@ export interface CallResult {
 type Staged = { kind: "final"; result: CallResult } | { kind: "execute"; action: Action; prepared: Prepared; key: string; policyVersion: number };
 
 const resultOf = (decision: Decision, extra: Partial<CallResult> = {}): CallResult => ({ decision: decision.decision, rule_id: decision.rule_id, reason: decision.reason, ...extra });
+const heldArgs = ({ order, refund }: Prepared) => {
+  if (!order) return refund;
+  const { approval_id, ...args } = order;
+  return args;
+};
 const blockOf = (rule_id: string, reason: string): Decision => ({ decision: "block", rule_id, reason });
 
 async function persistFinal(client: PoolClient, action: Action, decision: Decision, policyVersion: number | null, extra: Partial<CallResult> = {}): Promise<Staged> {
@@ -141,7 +146,7 @@ async function stage(deps: Deps, prepared: Prepared, agentId: string): Promise<S
       const pending = await client.query("SELECT COUNT(*)::int AS total FROM approvals WHERE status = 'pending' AND expires_at > $1", [now.toISOString()]);
       if (pending.rows[0].total >= maxPendingApprovals) return persistFinal(client, action, blockOf("R16", `Blocked: ${maxPendingApprovals} approvals are already waiting for the owner`), version);
       await recordDecision(client, action, decision, version);
-      const approvalId = await createApproval(client, action, decision.rule_id, policy.approval_ttl_minutes, now);
+      const approvalId = await createApproval(client, action, decision.rule_id, policy.approval_ttl_minutes, now, heldArgs(prepared));
       publish({ type: "approval", id: approvalId });
       return { kind: "final", result: resultOf(decision, { approval_id: approvalId }) };
     }

@@ -23,6 +23,8 @@ describe("countdown", () => {
     expect(countdown(65)).toBe("01:05");
     expect(countdown(0)).toBe("00:00");
     expect(countdown(899)).toBe("14:59");
+    expect(countdown(3599)).toBe("59:59");
+    expect(countdown(66900)).toBe("18h 35m");
   });
 });
 

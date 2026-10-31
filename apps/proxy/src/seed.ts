@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import { merchants, products } from "@paycurb/shared";
+import { canonicalJson, merchants, products } from "@paycurb/shared";
 import { appendAudit } from "./audit";
 import { activatePolicy, defaultPolicy, getActivePolicy } from "./policy";
 
@@ -26,7 +26,9 @@ export async function ensureDefaultPolicy(client: PoolClient) {
 
 export async function resetDemo(client: PoolClient) {
   for (const table of ["idempotency", "reservations", "executions", "approvals", "decisions", "actions"]) await client.query(`DELETE FROM ${table}`);
-  await activatePolicy(client, defaultPolicy, "Default demo policy");
+  const active = await getActivePolicy(client);
+  const unchanged = (policy: object) => canonicalJson({ ...policy, version: 0 });
+  if (!active || unchanged(active.policy) !== unchanged(defaultPolicy)) await activatePolicy(client, defaultPolicy, "Default demo policy");
   await appendAudit(client, {
     action_id: null,
     tool: "reset",

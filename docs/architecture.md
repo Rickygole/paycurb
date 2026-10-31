@@ -26,7 +26,7 @@ flowchart LR
 5. Block: the decision and audit row are written and a refusal is returned. PayPal is never contacted.
 6. Escalate: an approval row is created and a pending result is returned. Nothing is reserved. At most 50 approvals can be pending at once, past that the call is blocked with rule R16.
 7. Allow: the amount is reserved inside the same transaction, then PayPal is called outside it. The reservation becomes completed. It is released if PayPal rejects the request with a client error, or returns a failed, declined, voided or denied status. If the outcome is ambiguous (a timeout, a server error, a lost response) the call is blocked, the reservation stays reserved and keeps counting against the limits until it is checked by hand. Nothing reconciles it automatically.
-8. An approved request is re-evaluated at execution time and the payload hash must match the approval. One approval allows one execution.
+8. When the owner approves, the proxy itself submits the stored normalized order through the same pipeline: it is re-evaluated against the current policy and spend, the payload hash must match the approval, and the amount is reserved under the spend lock. One approval allows one execution. The audit log records the approval, then the PayPal result with its reference, or the block if the engine now refuses. If the agent repeats the call with the approval id, the idempotency record returns the same result and nothing is charged twice.
 
 ## Components
 

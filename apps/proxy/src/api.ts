@@ -4,7 +4,7 @@ import { streamSSE } from "hono/streaming";
 import { compilePolicy, policySchema, withStrictDefaults, type Compiled } from "@paycurb/compiler";
 import { createLlm, requiredEnv } from "@paycurb/llm";
 import { readAudit, verifyChain } from "./audit";
-import { decideApproval } from "./approvals";
+import { decideApproval, executeApproved } from "./approvals";
 import { config } from "./config";
 import { getPool, inTransaction } from "./db";
 import { subscribe } from "./events";
@@ -70,7 +70,7 @@ export function createApp({ deps, startAttackRun, compile = compileWithModel }: 
     try {
       return c.json(await compile(body.text));
     } catch {
-      return c.json({ error: "the rules could not be compiled, try rephrasing" }, 502);
+      return c.json({ error: "model_unavailable", message: "No model is available on this host, or it could not compile the rules. Edit the policy as JSON instead." }, 503);
     }
   });
   api.post("/policy/activate", async (c) => {
@@ -99,6 +99,7 @@ export function createApp({ deps, startAttackRun, compile = compileWithModel }: 
       const outcome = await decideApproval(id, verdict, deps.now());
       if (outcome === "missing") return c.json({ error: "approval not found" }, 404);
       if (outcome !== "updated") return c.json({ error: `approval is ${outcome === "expired" ? "expired" : "not pending"}` }, 409);
+      if (verdict === "approved") await executeApproved(deps, id);
       return c.json(await withClient((client) => getApproval(client, id)));
     });
   }

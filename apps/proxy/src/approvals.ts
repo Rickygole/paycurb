@@ -1,6 +1,7 @@
 import { appendAudit } from "./audit";
-import { inTransaction } from "./db";
+import { getPool, inTransaction } from "./db";
 import { publish } from "./events";
+import { handleCall, type Deps } from "./pipeline";
 
 type Verdict = "approved" | "rejected";
 
@@ -21,8 +22,8 @@ export async function decideApproval(id: string, verdict: Verdict, now: Date): P
       amount_cents: Number(row.amount_cents),
       merchant_id: row.merchant_id,
       decision: verdict === "approved" ? "allow" : "block",
-      rule_id: row.rule_id,
-      reason: verdict === "approved" ? "Owner approved this request" : "Owner rejected this request",
+      rule_id: verdict === "approved" ? row.rule_id : "R15",
+      reason: verdict === "approved" ? "Approved by owner" : "Rejected by owner",
       policy_version: null,
       payload_hash: row.payload_hash,
       paypal_ref: null,
@@ -31,4 +32,13 @@ export async function decideApproval(id: string, verdict: Verdict, now: Date): P
   });
   publish({ type: "approval", id });
   return outcome;
+}
+
+export async function executeApproved(deps: Deps, id: string) {
+  const row = (
+    await getPool().query("SELECT p.id, p.args_json, a.tool, a.agent_id FROM approvals p JOIN actions a ON a.id = p.action_id WHERE p.id::text = $1 AND p.status = 'approved'", [id])
+  ).rows[0];
+  if (!row?.args_json) return;
+  const args = row.tool === "create_order" ? { ...row.args_json, approval_id: row.id } : row.args_json;
+  await handleCall(deps, { tool: row.tool, args, agentId: row.agent_id });
 }

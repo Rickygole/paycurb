@@ -4,7 +4,7 @@ import { closePool, inTransaction } from "../src/db";
 import { defaultPolicy, activatePolicy } from "../src/policy";
 import { seedRegistry } from "../src/seed";
 import { fakeGateway } from "./fakes";
-import { resetDatabase } from "./helpers";
+import { asOwner, resetDatabase } from "./helpers";
 
 const gateway = fakeGateway();
 const compiled = { policy: defaultPolicy, readback: ["Block any single purchase above $100.00."], questions: [] };
@@ -64,6 +64,52 @@ describe("dashboard api", () => {
     expect((await call(`/api/approvals/${result.approval_id}/approve`, { method: "POST" })).status).toBe(409);
   });
 
+  const lamp = (extra: Record<string, unknown> = {}) => ({
+    currencyCode: "USD", payee: "acme-office@merchants.example", items: [{ sku: "LAMP-1", name: "Desk lamp", quantity: 1, itemCost: 75, itemTotal: 75 }], ...extra,
+  });
+  const hold = async (args: unknown = lamp()) => JSON.parse((await (await toolCall("create_order", args)).json()).result.content[0].text);
+
+  it("executes an approved order once and reports the PayPal reference", async () => {
+    const held = await hold();
+    const start = gateway.orders.length;
+    const card = await (await call(`/api/approvals/${held.approval_id}/approve`, { method: "POST" })).json();
+    expect(card).toMatchObject({ status: "executed", execution: { status: "COMPLETED", paypal_ref: expect.any(String) } });
+    expect(gateway.orders).toHaveLength(start + 1);
+    const before = gateway.orders.length;
+    const again = JSON.parse((await (await toolCall("create_order", lamp({ approval_id: held.approval_id }))).json()).result.content[0].text);
+    expect(again).toMatchObject({ decision: "allow" });
+    expect(gateway.orders).toHaveLength(before);
+    expect((await call(`/api/approvals/${held.approval_id}/approve`, { method: "POST" })).status).toBe(409);
+    const audit = (await (await call("/api/audit")).json()).rows.map((row: { reason: string; paypal_ref: string | null }) => [row.reason, row.paypal_ref]);
+    expect(audit.some(([reason, ref]: [string, string | null]) => reason.startsWith("Executed at PayPal") && ref)).toBe(true);
+  });
+
+  it("does not let an approval cover a changed order", async () => {
+    const held = await hold();
+    await call(`/api/approvals/${held.approval_id}/approve`, { method: "POST" });
+    const before = gateway.orders.length;
+    const changed = JSON.parse((await (await toolCall("create_order", lamp({ items: [{ sku: "LAMP-1", name: "Desk lamp", quantity: 2, itemCost: 75, itemTotal: 150 }], approval_id: held.approval_id }))).json()).result.content[0].text);
+    expect(changed.decision).toBe("block");
+    expect(gateway.orders).toHaveLength(before);
+  });
+
+  it("refuses to approve an expired request and executes nothing", async () => {
+    const held = await hold();
+    await asOwner((client) => client.query("UPDATE approvals SET expires_at = '2020-01-01'"));
+    const before = gateway.orders.length;
+    expect((await call(`/api/approvals/${held.approval_id}/approve`, { method: "POST" })).status).toBe(409);
+    expect(gateway.orders).toHaveLength(before);
+  });
+
+  it("logs a rejection as rejected by the owner and executes nothing", async () => {
+    const held = await hold();
+    const before = gateway.orders.length;
+    await call(`/api/approvals/${held.approval_id}/reject`, { method: "POST" });
+    expect(gateway.orders).toHaveLength(before);
+    const rows = (await (await call("/api/audit")).json()).rows as { reason: string }[];
+    expect(rows.some((row) => row.reason === "Rejected by owner")).toBe(true);
+  });
+
   it("lists the tools and refuses unknown ones", async () => {
     const listed = await app.request("/mcp", {
       method: "POST",
@@ -97,7 +143,7 @@ describe("dashboard api", () => {
   });
 
   it("reports a compile failure and rejects empty text", async () => {
-    expect((await call("/api/policy/compile", { method: "POST", body: JSON.stringify({ text: "fail" }) })).status).toBe(502);
+    expect((await call("/api/policy/compile", { method: "POST", body: JSON.stringify({ text: "fail" }) })).status).toBe(503);
     expect((await call("/api/policy/compile", { method: "POST", body: JSON.stringify({ text: " " }) })).status).toBe(400);
   });
 
@@ -107,5 +153,14 @@ describe("dashboard api", () => {
     expect(await (await call("/api/stats")).json()).toMatchObject({ blocked_count: 0 });
     const held = (await (await call("/api/approvals")).json()) as { status: string }[];
     expect(held.map((card) => card.status)).toEqual(["pending"]);
+  });
+
+  it("keeps the policy version when the active policy is already the default", async () => {
+    await call("/api/demo/reset", { method: "POST" });
+    await call("/api/demo/reset", { method: "POST" });
+    expect(await (await call("/api/policy/versions")).json()).toHaveLength(1);
+    await call("/api/policy/activate", { method: "POST", body: JSON.stringify({ policy: { ...defaultPolicy, daily_limit_cents: 30000 }, source_text: "raise daily" }) });
+    await call("/api/demo/reset", { method: "POST" });
+    expect(await (await call("/api/policy/versions")).json()).toHaveLength(3);
   });
 });

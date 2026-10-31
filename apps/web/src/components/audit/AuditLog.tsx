@@ -4,7 +4,7 @@ import { AllCommunityModule, ModuleRegistry, type ColDef, type RowClickedEvent }
 import { AgGridReact } from "ag-grid-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorText } from "@/lib/api";
-import { count, dollars, formatDateTime, fullReason, hasAmount, merchantName, stamp } from "@/lib/format";
+import { count, dollars, formatDateTime, auditMerchant, fullReason, hasAmount, stamp } from "@/lib/format";
 import type { AuditPage, AuditRow } from "@/lib/types";
 import { DecisionBadge, outcomeLabel } from "../DecisionBadge";
 import { Drawer, Field, useLast } from "../Drawer";
@@ -41,7 +41,7 @@ const columns: ColDef<AuditRow>[] = [
     valueFormatter: (p) => outcomeLabel(p.value),
     getQuickFilterText: (p) => outcomeLabel(p.value),
   },
-  { colId: "merchant", headerName: "Merchant", width: 150, valueGetter: (p) => (p.data ? merchantName(p.data.merchant_id) : "") },
+  { colId: "merchant", headerName: "Merchant", width: 150, valueGetter: (p) => (p.data ? auditMerchant(p.data) : "") },
   {
     colId: "amount",
     headerName: "Amount",
@@ -215,7 +215,7 @@ function AuditRecord({ row }: { row: AuditRow }) {
       <section>
         <dl>
           <Field label="Time">{formatDateTime(row.ts)}</Field>
-          <Field label="Merchant">{merchantName(row.merchant_id)}</Field>
+          <Field label="Merchant">{auditMerchant(row)}</Field>
           <Field label="Tool">{row.tool}</Field>
           <Field label="Rule">{row.rule_id}</Field>
           <Field label="Policy version">v{row.policy_version}</Field>
