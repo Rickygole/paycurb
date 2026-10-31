@@ -9,14 +9,14 @@ const looks: Record<Outcome, { label: string; className: string; Icon: typeof Ch
 
 export const outcomeLabel = (outcome: Outcome) => looks[outcome]?.label ?? outcome;
 
-export function DecisionBadge({ decision }: { decision: Outcome }) {
-  const look = looks[decision];
-  if (!look) return <span className="status">{decision}</span>;
+export function DecisionBadge({ decision, label }: { decision: Outcome | null; label?: string }) {
+  const look = decision ? looks[decision] : null;
+  if (!look) return <span className="status">{label ?? decision}</span>;
   const { Icon } = look;
   return (
     <span className={`status ${look.className}`}>
       <Icon size={14} strokeWidth={2.25} />
-      {look.label}
+      {label ?? look.label}
     </span>
   );
 }

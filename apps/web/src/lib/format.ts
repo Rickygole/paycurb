@@ -16,6 +16,7 @@ export const formatDateTime = (iso: string) => dateTime.format(new Date(iso));
 export const formatTime = (iso: string) => timeOnly.format(new Date(iso));
 export const clock = (iso: string) => clockTime.format(new Date(iso));
 export const dayLabel = (iso: string) => shortDate.format(new Date(iso));
+export const stamp = (iso: string, now = new Date()) => `${new Date(iso).toDateString() === now.toDateString() ? "Today" : dayLabel(iso)}, ${clock(iso)}`;
 export const shortHash = (hash: string) => (hash.length > 14 ? `${hash.slice(0, 8)}...${hash.slice(-4)}` : hash);
 export const hasAmount = (cents: number | null | undefined): cents is number => typeof cents === "number" && cents > 0;
 

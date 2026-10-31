@@ -15,7 +15,7 @@ const stopColours: Record<Outcome, [string, string]> = {
 export function RouteStrip({ decision, size = "row" }: { decision: Outcome; size?: "row" | "large" }) {
   const passed = decision === "allow";
   const [fill, stroke] = stopColours[decision] ?? stopColours.block;
-  const scale = size === "large" ? 2 : 1;
+  const scale = size === "large" ? 2 : 1.2;
   return (
     <span className={`route route-${size}`} title={`Agent, Paycurb policy, PayPal: ${words[decision] ?? decision}`}>
       <svg width={72 * scale} height={12 * scale} viewBox="0 0 72 12" aria-hidden="true" focusable="false">

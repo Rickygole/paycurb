@@ -1,4 +1,4 @@
-import { clock, dollars, formatDateTime, hasAmount, merchantName, plainReason } from "@/lib/format";
+import { dollars, formatDateTime, hasAmount, merchantName, plainReason, stamp } from "@/lib/format";
 import type { Feed } from "@/lib/types";
 import { DecisionBadge } from "../DecisionBadge";
 import { RouteStrip } from "./RouteStrip";
@@ -18,7 +18,7 @@ export function DecisionCard({ item, fresh, index, onOpen }: { item: Feed; fresh
           <span className="drow-meta">
             {merchantName(item.merchant_id, item.merchant_name)} <span aria-hidden="true">·</span>{" "}
             <time dateTime={item.ts} title={formatDateTime(item.ts)} className="num">
-              {clock(item.ts)}
+              {stamp(item.ts)}
             </time>
           </span>
         </span>
@@ -28,7 +28,7 @@ export function DecisionCard({ item, fresh, index, onOpen }: { item: Feed; fresh
             <Amount cents={item.amount_cents} />
           </span>
           <span className="drow-ref">
-            Rule {item.rule_id}
+            Rule <span className="mono">{item.rule_id}</span>
             {item.paypal_ref ? (
               <>
                 {" "}

@@ -131,6 +131,11 @@ export function LiveFeed() {
             ))}
           </ol>
         )}
+        {list !== null && list.length > 0 && list.length < SHOWN && (
+          <p className="feed-end muted">
+            Nothing else yet. <Link href="/agent" className="link-btn">Run the agent</Link> to see more decisions.
+          </p>
+        )}
       </section>
       <DecisionDrawer item={shown} open={open !== null} onClose={() => setOpen(null)} />
     </>

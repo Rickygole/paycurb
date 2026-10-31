@@ -165,8 +165,8 @@ export function Gate({ items, status, policyVersion }: { items: Feed[] | null; s
   const live = status === "live";
 
   return (
-    <section className="panel gate" aria-labelledby="feed-title">
-      <div className="gate-title">
+    <>
+      <header className="feed-title">
         <h1 id="feed-title" className="title">
           Live feed
         </h1>
@@ -174,52 +174,54 @@ export function Gate({ items, status, policyVersion }: { items: Feed[] | null; s
           <span className="live-dot" data-state={live ? "live" : "polling"} aria-hidden="true" />
           {live ? "Live from the policy engine" : status === "connecting" ? "Connecting, checking every 2 seconds" : "Stream down, checking every 2 seconds"}
         </p>
-      </div>
-      <div className="gate-track" role="img" aria-label={`Every payment call goes from your agent through the Paycurb policy before PayPal. Of the last ${total} calls, ${tally.block} were stopped, ${tally.escalate} held for you and ${tally.allow} passed.`}>
-        <span className="gate-line" />
-        <span className="gate-node" style={{ left: "0%" }}>
-          <span className="node-dot" />
-          <span className="node-label">
-            <b>Agent</b>
-            <span className="end-sub">Your shopping agent</span>
+      </header>
+      <section className="panel gate" aria-labelledby="feed-title">
+        <div className="gate-track" role="img" aria-label={`Every payment call goes from your agent through the Paycurb policy before PayPal. Of the last ${total} calls, ${tally.block} were stopped, ${tally.escalate} held for you and ${tally.allow} passed.`}>
+          <span className="gate-line" />
+          <span className="gate-node" style={{ left: "0%" }}>
+            <span className="node-dot" />
+            <span className="node-label">
+              <b>Agent</b>
+              <span className="end-sub">Your shopping agent</span>
+            </span>
           </span>
-        </span>
-        <span className="gate-node" style={{ left: "50%" }}>
-          <span className="node-policy">
-            <GateMark size={20} posts />
-            <span ref={policyRing} className="node-ring" />
-          </span>
-          <span className="node-label">
-            <b>Paycurb policy{policyVersion ? ` v${policyVersion}` : ""}</b>
-            <span className="node-sub">
-              <span className="num node-count" data-hidden={!!caption}>
-                {items ? (
-                  <>
-                    {count(tally.block)} stopped · {count(tally.escalate)} held · {count(tally.allow)} passed<span className="wide-only"> of the last {count(total)}</span>
-                  </>
-                ) : (
-                  "Reading the latest calls"
-                )}
-              </span>
-              <span className="gate-caption" data-tone={caption?.tone} data-shown={!!caption} aria-live="polite">
-                {caption?.text ?? ""}
+          <span className="gate-node" style={{ left: "50%" }}>
+            <span className="node-policy">
+              <GateMark size={20} posts />
+              <span ref={policyRing} className="node-ring" />
+            </span>
+            <span className="node-label">
+              <b>Paycurb policy{policyVersion ? ` v${policyVersion}` : ""}</b>
+              <span className="node-sub">
+                <span className="num node-count" data-hidden={!!caption}>
+                  {items ? (
+                    <>
+                      {count(tally.block)} stopped · {count(tally.escalate)} held · {count(tally.allow)} passed<span className="wide-only"> of the last {count(total)}</span>
+                    </>
+                  ) : (
+                    "Reading the latest calls"
+                  )}
+                </span>
+                <span className="gate-caption" data-tone={caption?.tone} data-shown={!!caption} aria-live="polite">
+                  {caption?.text ?? ""}
+                </span>
               </span>
             </span>
           </span>
-        </span>
-        <span className="gate-node" style={{ left: "100%" }}>
-          <span className="node-dot end" />
-          <span ref={paypalRing} className="node-ring" style={{ inset: -6 }} />
-          <span className="node-label">
-            <b>PayPal</b>
-            <span className="end-sub">Sandbox</span>
+          <span className="gate-node" style={{ left: "100%" }}>
+            <span className="node-dot end" />
+            <span ref={paypalRing} className="node-ring" style={{ inset: -6 }} />
+            <span className="node-label">
+              <b>PayPal</b>
+              <span className="end-sub">Sandbox</span>
+            </span>
           </span>
-        </span>
-        {resting && <Resting key={resting.id} item={resting} />}
-        {flights.map(({ item, delay }) => (
-          <Flight key={item.id} item={item} delay={delay} policyRing={policyRing} paypalRing={paypalRing} onCaption={showCaption} onDone={land} />
-        ))}
-      </div>
-    </section>
+          {resting && <Resting key={resting.id} item={resting} />}
+          {flights.map(({ item, delay }) => (
+            <Flight key={item.id} item={item} delay={delay} policyRing={policyRing} paypalRing={paypalRing} onCaption={showCaption} onDone={land} />
+          ))}
+        </div>
+      </section>
+    </>
   );
 }

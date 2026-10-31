@@ -57,7 +57,7 @@ function Figure({ value, format, caption, href, index }: { value: number; format
   );
 }
 
-const captions = ["Spent today", "Left in today's limit", "Waiting for you", "Stopped before PayPal"];
+const captions = ["Spent today", "Left to spend today", "Waiting for you", "Stopped before PayPal"];
 
 export function StatsStrip({ stats, error, onRetry }: { stats: Stats | null; error: string | null; onRetry: () => void }) {
   if (!stats && error) {

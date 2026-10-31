@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countdown, fullReason, hasAmount, plainReason } from "../src/lib/format";
+import { countdown, fullReason, hasAmount, plainReason, stamp } from "../src/lib/format";
 
 describe("plainReason", () => {
   it("drops the decision word the status pill already says", () => {
@@ -31,5 +31,13 @@ describe("hasAmount", () => {
     expect(hasAmount(null)).toBe(false);
     expect(hasAmount(0)).toBe(false);
     expect(hasAmount(1200)).toBe(true);
+  });
+});
+
+describe("stamp", () => {
+  it("says Today for the current day and the date otherwise", () => {
+    const now = new Date(2026, 9, 31, 12, 0, 0);
+    expect(stamp(new Date(2026, 9, 31, 9, 5, 7).toISOString(), now)).toBe("Today, 09:05:07");
+    expect(stamp(new Date(2026, 9, 30, 23, 59, 1).toISOString(), now)).toBe("Oct 30, 23:59:01");
   });
 });
