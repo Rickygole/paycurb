@@ -98,6 +98,7 @@ async function resolveApproval(client: PoolClient, action: Action, prepared: Pre
     if (!byId) return { approval: null, approvalRowId: null };
     return { early: await persistFinal(client, action, blockOf("R15", "Blocked: the approval has expired"), policyVersion) };
   }
+  if (row.status === "pending" && row.payload_hash !== action.payload_hash) return { approval: null, approvalRowId: null };
   if (row.status === "pending") return { early: { kind: "final", result: { decision: "escalate", rule_id: row.rule_id, reason: "Needs approval: waiting for the owner", approval_id: row.id } } };
   if (row.status === "executed") return { early: await persistFinal(client, action, blockOf("R15", "Blocked: this approval was already used"), policyVersion) };
   if (row.status === "approved") return { approval: { payload_hash: row.payload_hash, amount_cents: Number(row.amount_cents) }, approvalRowId: row.id };
