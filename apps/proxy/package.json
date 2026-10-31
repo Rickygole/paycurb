@@ -1,9 +1,31 @@
 {
-  "name": "@paycurb/proxy", "version": "0.1.0", "type": "module", "private": true,
-  "scripts": { "dev": "tsx watch src/server.ts", "start": "tsx src/server.ts", "migrate": "tsx src/migrate.ts", "test": "vitest run", "typecheck": "tsc --noEmit" },
-  "dependencies": {
-    "@hono/node-server": "^1.13.0", "@modelcontextprotocol/sdk": "^1.12.0", "@paycurb/engine": "workspace:*", "@paycurb/shared": "workspace:*",
-    "hono": "^4.6.0", "pg": "^8.13.0", "tsx": "^4.19.0", "zod": "^3.23.0"
+  "name": "@paycurb/proxy",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "migrate": "tsx src/migrate.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
-  "devDependencies": { "@types/node": "^22.0.0", "@types/pg": "^8.11.0", "typescript": "^5.6.0", "vitest": "^2.1.0" }
+  "dependencies": {
+    "@hono/node-server": "^1.13.0",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@paycurb/engine": "workspace:*",
+    "@paycurb/shared": "workspace:*",
+    "hono": "^4.6.0",
+    "pg": "^8.13.0",
+    "tsx": "^4.19.0",
+    "zod": "^3.23.0",
+    "@paycurb/compiler": "workspace:*",
+    "@paycurb/llm": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
 }
