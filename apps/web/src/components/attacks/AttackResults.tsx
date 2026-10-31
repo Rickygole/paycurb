@@ -3,27 +3,17 @@
 import { useState } from "react";
 import { errorText, postJson, useApi } from "@/lib/api";
 import { count, dollars, formatDateTime, percent } from "@/lib/format";
-import type { AttackReport } from "@/lib/types";
-import { AlertIcon, PlayIcon, TargetIcon } from "../icons";
-import { Page, PageHeader } from "../Shell";
-import { EmptyState, ErrorState, LoadingBlock } from "../states";
+import type { AgentGroupDetail, AttackReport, Proportion } from "@/lib/types";
+import { AlertIcon } from "../icons";
+import { PageHeader } from "../Shell";
+import { EmptyState, ErrorState, Skeleton } from "../states";
 import { GroupBars } from "./GroupBars";
-import { attackGroups, groupNames, rateOf } from "./groups";
 
 type Latest = AttackReport | { report: null };
 
 const isReport = (value: Latest | null): value is AttackReport => !!value && "groups" in value && Array.isArray(value.groups);
 
-function Headline({ label, value, hint, tone }: { label: string; value: string; hint: string; tone?: "allow" | "block" }) {
-  const color = tone === "allow" ? "text-allow" : tone === "block" ? "text-block" : "text-fg";
-  return (
-    <div className="card p-4">
-      <p className="eyebrow">{label}</p>
-      <p className={`mt-1.5 text-3xl font-bold tracking-tight num ${color}`}>{value}</p>
-      <p className="mt-1 text-xs text-muted">{hint}</p>
-    </div>
-  );
-}
+const ms = (value: number) => `${value < 0.1 ? value.toFixed(3) : value.toFixed(2)} ms`;
 
 export function AttackResults() {
   const [started, setStarted] = useState(false);
@@ -46,138 +36,205 @@ export function AttackResults() {
     }
   }
 
-  const runButton = (
-    <button type="button" className="btn-primary" onClick={runSuite} disabled={running}>
-      <PlayIcon size={14} />
-      {running ? "Suite running..." : "Run Suite"}
-    </button>
-  );
-
   return (
-    <Page>
+    <>
       <PageHeader
-        title="Attack Results"
-        description="The same attack scenarios run against the agent twice: once paying PayPal directly, once through Paycurb."
-        actions={runButton}
+        title="Attacks"
+        description={
+          report
+            ? `Did anything get past the policy? ${count(report.headline.attack_scenarios)} scripted attacks, each run once paying PayPal directly and once through Paycurb. Report from ${formatDateTime(report.generated_at)}.`
+            : "Did anything get past the policy? Scripted attacks, each run once paying PayPal directly and once through Paycurb."
+        }
+        actions={
+          <button type="button" className="btn" onClick={runSuite} disabled={running}>
+            {running ? "Suite running" : "Run the suite again"}
+          </button>
+        }
       />
       {runError && (
-        <p role="alert" className="mb-4 flex items-center gap-2 text-sm text-block">
-          <AlertIcon size={15} className="shrink-0" />
+        <p role="alert" className="notice" style={{ marginBottom: 16, color: "var(--block-ink)" }}>
+          <AlertIcon size={16} />
           {runError}
         </p>
       )}
       {running && (
-        <p role="status" className="mb-4 rounded-lg bg-accent-soft px-4 py-3 text-sm font-medium text-accent">
-          The attack suite is running. These results refresh as soon as the new report is written.
+        <p role="status" className="notice" style={{ marginBottom: 16 }}>
+          The suite is running. This page updates when the new report is written.
         </p>
       )}
-      {latest.loading && <LoadingBlock label="Loading the latest report" rows={3} />}
-      {!latest.loading && latest.error && !latest.data && <ErrorState title="Could not load attack results" message={latest.error} onRetry={latest.reload} />}
+      {latest.loading && (
+        <div role="status" className="stack">
+          <span className="sr-only">Loading the latest report</span>
+          <Skeleton style={{ height: 140 }} />
+          <Skeleton style={{ height: 380 }} />
+        </div>
+      )}
+      {!latest.loading && latest.error && !latest.data && <ErrorState title="The attack report did not load" message={latest.error} onRetry={latest.reload} />}
       {latest.data && !report && (
-        <EmptyState title="No attack results yet" icon={<TargetIcon size={28} />}>
-          Run the suite to measure how often each attack gets money out, with and without the firewall. It takes a few minutes.
-        </EmptyState>
+        <EmptyState title="No attack report yet">Run the suite to measure how often each attack moves money, with and without Paycurb. It takes a few minutes.</EmptyState>
       )}
       {report && <Report report={report} />}
-    </Page>
+    </>
   );
 }
 
 function Report({ report }: { report: AttackReport }) {
-  const { headline } = report;
-  const baselineRate = rateOf(headline.baseline_success, headline.attack_scenarios) ?? 0;
-  const protectedRate = rateOf(headline.protected_success, headline.attack_scenarios) ?? 0;
-  const pendingAgent = report.agent?.status === "pending" || !headline.includes_group_a;
+  const { headline, latency_ms: latency } = report;
+  const control = report.groups.find((group) => group.group === "H");
+  const detail = report.agent?.detail ?? null;
+  const findings = report.findings ?? [];
+  const errors = report.agent?.errors ?? [];
 
   return (
-    <div className="space-y-6">
-      <p className="text-xs text-muted">
-        Generated {formatDateTime(report.generated_at)}. Agent model: <span className="font-mono">{report.model ?? "not run"}</span>. {count(headline.attack_scenarios)} attack scenarios measured
-        {pendingAgent ? ", live agent group pending" : `, ${report.trials_per_agent_scenario} trials per agent scenario`}.
-      </p>
-      {pendingAgent && report.agent?.note && (
-        <p role="status" className="rounded-lg bg-escalate-soft px-4 py-3 text-sm text-escalate">
-          {report.agent.note}
+    <div className="stack" style={{ gap: 24 }}>
+      <section className="panel verdict" aria-label="Headline">
+        <div className="verdict-figure rise" style={{ "--i": 0 } as React.CSSProperties}>
+          <span className="big num" data-good={headline.protected_success === 0}>
+            {headline.protected_success} of {headline.attack_scenarios}
+          </span>
+          <span>moved money beyond policy with Paycurb</span>
+        </div>
+        <div className="verdict-figure rise" style={{ "--i": 1 } as React.CSSProperties}>
+          <span className="mid num">
+            {headline.baseline_success} of {headline.attack_scenarios}
+          </span>
+          <span className="muted">without Paycurb</span>
+        </div>
+        <p className="verdict-note rise" style={{ "--i": 2 } as React.CSSProperties}>
+          <b className="num">{dollars(headline.money_lost_baseline_cents)}</b> moved beyond policy without it, <b className="num">{dollars(headline.money_lost_protected_cents)}</b> with it.
+          {!headline.includes_group_a && " The live agent group is not counted yet."}
         </p>
+      </section>
+
+      <div className="split">
+        <GroupBars groups={report.groups} />
+        <aside className="stack" aria-label="Cost and control">
+          <section className="panel panel-pad" aria-labelledby="latency-title">
+            <h2 id="latency-title" className="field-label muted" style={{ fontWeight: 400 }}>
+              Time Paycurb adds
+            </h2>
+            <p className="num" style={{ fontSize: 28, lineHeight: "34px", fontWeight: 500 }}>
+              {ms(latency.proxy_p50)}
+            </p>
+            <p>median through the whole proxy</p>
+            <p className="small muted" style={{ marginTop: 10 }}>
+              {ms(latency.proxy_p95)} at p95{latency.proxy_samples ? ` over ${count(latency.proxy_samples)} calls` : ""}. The policy engine alone takes {ms(latency.engine_p50)}
+              {latency.engine_samples ? ` over ${count(latency.engine_samples)} runs` : ""}. PayPal time not included.
+            </p>
+          </section>
+          {control && (
+            <section className="panel panel-pad" aria-labelledby="control-title">
+              <h2 id="control-title" className="field-label muted" style={{ fontWeight: 400 }}>
+                Legitimate purchases
+              </h2>
+              <p className="num" style={{ fontSize: 28, lineHeight: "34px", fontWeight: 500 }}>
+                {percent(report.false_block_rate)}
+              </p>
+              <p>wrongly blocked</p>
+              <p className="small muted" style={{ marginTop: 10 }}>
+                {control.protected_success ?? 0} of {control.scenarios} control purchases went through as intended. {percent(report.escalated_as_designed_rate)} of the ones that need you were held as designed.
+              </p>
+            </section>
+          )}
+        </aside>
+      </div>
+
+      {detail ? (
+        <AgentBlock detail={detail} model={report.model} />
+      ) : (
+        <p className="muted">The live agent group (A) is not measured on this host yet.</p>
       )}
-      <section aria-label="Headline numbers" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Headline
-          label="Attack success with Paycurb"
-          value={percent(protectedRate)}
-          hint={`${headline.protected_success} of ${headline.attack_scenarios} scenarios. ${percent(baselineRate)} without it (${headline.baseline_success} of ${headline.attack_scenarios})`}
-          tone={headline.protected_success === 0 ? "allow" : "block"}
-        />
-        <Headline label="Money lost with Paycurb" value={dollars(headline.money_lost_protected_cents)} hint={`${dollars(headline.money_lost_baseline_cents)} moved beyond policy without it`} />
-        <Headline label="False block rate" value={percent(report.false_block_rate)} hint={`Legitimate purchases stopped. ${percent(report.escalated_as_designed_rate)} escalated as designed`} />
-        <Headline
-          label="Engine latency, median"
-          value={`${report.latency_ms.engine_p50} ms`}
-          hint={`${report.latency_ms.engine_p95} ms at p95. Whole proxy ${report.latency_ms.proxy_p50} ms median, ${report.latency_ms.proxy_p95} ms at p95`}
-        />
-      </section>
-      <GroupBars groups={report.groups} />
-      <section className="card overflow-x-auto" aria-labelledby="metrics-title">
-        <h2 id="metrics-title" className="px-5 pt-5 pb-3 font-semibold">
-          Metrics by group
-        </h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-y border-line bg-surface-2 text-left text-xs text-muted">
-              <th scope="col" className="px-5 py-2.5 font-medium">Group</th>
-              <th scope="col" className="px-4 py-2.5 text-right font-medium">Scenarios</th>
-              <th scope="col" className="px-4 py-2.5 text-right font-medium">Baseline success</th>
-              <th scope="col" className="px-4 py-2.5 text-right font-medium">Protected success</th>
-              <th scope="col" className="px-4 py-2.5 text-right font-medium">Lost, baseline</th>
-              <th scope="col" className="px-5 py-2.5 text-right font-medium">Lost, protected</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attackGroups(report.groups).map((group) => {
-              const pending = group.status === "pending";
-              const protectedHits = group.protected_success ?? 0;
-              return (
-                <tr key={group.group} className="border-b border-line last:border-b-0">
-                  <th scope="row" className="px-5 py-2.5 text-left font-medium">
-                    {group.group}. {groupNames[group.group] ?? "Other"}
-                  </th>
-                  <td className="px-4 py-2.5 text-right num">{group.scenarios}</td>
-                  <td className="px-4 py-2.5 text-right num">{pending ? "Pending" : `${group.baseline_success} of ${group.scenarios}`}</td>
-                  <td className={`px-4 py-2.5 text-right font-semibold num ${pending ? "" : protectedHits > 0 ? "text-block" : "text-allow"}`}>
-                    {pending ? "Pending" : `${group.protected_success} of ${group.scenarios}`}
-                  </td>
-                  <td className="px-4 py-2.5 text-right num">{pending ? "Pending" : dollars(group.money_lost_baseline_cents ?? 0)}</td>
-                  <td className="px-5 py-2.5 text-right font-semibold num">{pending ? "Pending" : dollars(group.money_lost_protected_cents ?? 0)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </section>
-      <section aria-labelledby="limits-title">
-        <h2 id="limits-title" className="mb-1 font-semibold">
-          Known limitations
-        </h2>
-        <p className="mb-3 text-sm text-muted">Cases the firewall does not fully stop, reported as they are.</p>
-        {report.limitations.length === 0 ? (
-          <p className="text-sm text-muted">The report lists no known limitations.</p>
-        ) : (
-          <ul className="grid gap-3 md:grid-cols-2">
-            {report.limitations.map((item) => (
-              <li key={item.id} className="card p-4">
-                <p className="flex items-center gap-2 text-sm font-semibold">
-                  <span className="rounded bg-escalate-soft px-1.5 py-0.5 font-mono text-xs text-escalate">{item.id}</span>
-                  Scenario
-                </p>
-                <p className="mt-1.5 text-sm">{item.description}</p>
-                <p className="mt-2 text-sm text-muted">
-                  <span className="font-semibold text-fg">Outcome: </span>
-                  {item.outcome}
-                </p>
+
+      {(findings.length > 0 || errors.length > 0) && (
+        <section className="panel panel-pad" aria-labelledby="findings-title">
+          <h2 id="findings-title" className="section-title" style={{ fontSize: 16 }}>
+            Findings
+          </h2>
+          <ul className="readback" style={{ marginTop: 10 }}>
+            {[...findings, ...errors].map((line) => (
+              <li key={line}>
+                <AlertIcon size={15} style={{ color: "var(--block-ink)" }} />
+                <span>{line}</span>
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      <section aria-labelledby="limits-title">
+        <h2 id="limits-title" className="section-title">
+          What it does not stop
+        </h2>
+        <p className="section-note" style={{ marginBottom: 12 }}>
+          Scenarios inside every limit, reported as they ran.
+        </p>
+        {report.limitations.length === 0 ? (
+          <p className="muted">The report lists no known limitations.</p>
+        ) : (
+          <div className="limits">
+            {report.limitations.map((item) => (
+              <article key={item.id} className="panel">
+                <p style={{ fontWeight: 500 }}>
+                  <span className="status" style={{ marginRight: 10 }}>
+                    {item.id}
+                  </span>
+                  {item.description}
+                </p>
+                <p className="muted">{item.outcome}</p>
+              </article>
+            ))}
+          </div>
         )}
       </section>
+
+      <p className="small muted" style={{ borderTop: "1px solid var(--hairline)", paddingTop: 16 }}>
+        Paycurb bounds loss to your policy limits. It does not stop every kind of attack. Scenarios are scripted and fixed.
+      </p>
     </div>
+  );
+}
+
+function Rate({ label, value }: { label: string; value: Proportion }) {
+  return (
+    <div className="rate">
+      <span className="val num">{percent(value.rate)}</span>
+      <span>{label}</span>
+      <span className="small muted num">
+        95% interval {percent(value.low)} to {percent(value.high)}
+      </span>
+    </div>
+  );
+}
+
+function AgentBlock({ detail, model }: { detail: AgentGroupDetail; model: string | null }) {
+  return (
+    <section className="panel" aria-labelledby="agent-title">
+      <header className="panel-head">
+        <h2 id="agent-title">Live agent, group A</h2>
+        <p className="small muted">
+          {detail.trials} trials per scenario{model ? `, model ${model}` : ""}
+        </p>
+      </header>
+      <div className="pair" style={{ padding: 20, gap: 32 }}>
+        <div>
+          <h3 className="field-label">
+            Without Paycurb <span className="muted small">({detail.valid_trials_baseline} valid trials)</span>
+          </h3>
+          <div className="rates">
+            <Rate label="the agent tried the bad purchase" value={detail.baseline_attempted} />
+            <Rate label="money actually moved" value={detail.baseline_money_moved} />
+          </div>
+        </div>
+        <div>
+          <h3 className="field-label">
+            With Paycurb <span className="muted small">({detail.valid_trials_protected} valid trials)</span>
+          </h3>
+          <div className="rates">
+            <Rate label="the agent tried the bad purchase" value={detail.protected_attempted} />
+            <Rate label="money actually moved" value={detail.protected_money_moved} />
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
