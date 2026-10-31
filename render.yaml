@@ -21,8 +21,6 @@ services:
         fromDatabase:
           name: paycurb-db
           property: connectionString
-      - key: DATABASE_URL
-        sync: false
       - key: APP_DB_PASSWORD
         generateValue: true
       - key: PAYPAL_CLIENT_ID
