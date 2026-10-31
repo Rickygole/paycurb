@@ -205,7 +205,15 @@ export const PencilIcon = (props: IconProps) => (
   </Icon>
 );
 
-export function GateMark({ size = 20, className }: { size?: number; className?: string }) {
+export function GateMark({ size = 20, className, posts = false }: { size?: number; className?: string; posts?: boolean }) {
+  if (posts) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false" className={className}>
+        <rect x="7.25" y="1" width="5.5" height="6.5" rx="2.75" fill="currentColor" />
+        <rect x="7.25" y="12.5" width="5.5" height="6.5" rx="2.75" fill="currentColor" />
+      </svg>
+    );
+  }
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false" className={className}>
       <rect x="11" y="1" width="5.5" height="7.5" rx="2.75" fill="currentColor" />

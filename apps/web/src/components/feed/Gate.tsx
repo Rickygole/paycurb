@@ -186,7 +186,7 @@ export function Gate({ items, status, policyVersion }: { items: Feed[] | null; s
         </span>
         <span className="gate-node" style={{ left: "50%" }}>
           <span className="node-policy">
-            <GateMark size={18} />
+            <GateMark size={20} posts />
             <span ref={policyRing} className="node-ring" />
           </span>
           <span className="node-label">
