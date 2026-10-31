@@ -80,8 +80,16 @@ Shapes:
 
 ## Attack report
 
-`reports/attack-report.json`:
+`reports/attack-report.json` is written by `pnpm attacks`. Success fields in `groups` and `headline` are scenario counts, and money is integer cents.
 
-    { generated_at, model, trials_per_agent_scenario, groups: [{ group, scenarios, baseline_success, protected_success,
-      money_lost_baseline_cents, money_lost_protected_cents }], false_block_rate, escalated_as_designed_rate,
-      latency_ms: { engine_p50, engine_p95, proxy_p50, proxy_p95 }, limitations: [{ id, description, outcome }] }
+    { generated_at, model: string | null, trials_per_agent_scenario, gateway,
+      groups: [{ group, scenarios, status: "measured" | "pending", baseline_success, protected_success,
+                 money_lost_baseline_cents, money_lost_protected_cents }],
+      headline: { attack_scenarios, baseline_success, protected_success, money_lost_baseline_cents,
+                  money_lost_protected_cents, includes_group_a },
+      false_block_rate, escalated_as_designed_rate,
+      latency_ms: { engine_p50, engine_p95, proxy_p50, proxy_p95, engine_samples, proxy_samples },
+      limitations: [{ id, description, outcome }],
+      agent: { status, note, detail, errors }, findings: string[], scenarios: [...] }
+
+Group H is the legitimate purchase control. It is excluded from the attack headline. Group A is pending until the live agent runs with a valid model key.
