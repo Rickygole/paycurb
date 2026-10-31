@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Policy } from "@paycurb/engine";
-import { policyLines, policySummary } from "../src/lib/policySummary";
+import { policyLines, policySummary, policyText } from "../src/lib/policySummary";
 
 const policy = {
   per_transaction_limit_cents: 30000,
@@ -23,5 +23,11 @@ describe("policySummary", () => {
 
   it("names trusted merchants in the read back", () => {
     expect(policyLines(policy)).toContain("Trusted merchants: Acme Office Supply and Paper Co.");
+  });
+
+  it("writes the rules back as plain English", () => {
+    expect(policyText(policy)).toBe(
+      "Acme Office Supply and Paper Co are trusted. Ask me about other merchants. Never more than $300 in one order and no more than $500 a day. Ask me before anything at or over $100. Ask me about refunds. Block payouts.",
+    );
   });
 });

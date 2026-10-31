@@ -3,17 +3,19 @@
 import { useState } from "react";
 import { ApiError, errorText, postJson, useApi } from "@/lib/api";
 import { dayLabel, formatDateTime } from "@/lib/format";
-import { policyLines } from "@/lib/policySummary";
+import { policyLines, policyText } from "@/lib/policySummary";
 import type { ActivePolicy, CompileResult, Policy, PolicyVersion } from "@/lib/types";
 import { JsonBlock } from "../Drawer";
-import { AlertIcon, CheckIcon, PencilIcon } from "../icons";
+import { AlertIcon, CheckIcon, ChevronRightIcon, PencilIcon } from "../icons";
 import { PageHeader } from "../Shell";
 import { ErrorState, Skeleton } from "../states";
 import { ChangeTable } from "./ChangeTable";
 import { VersionHistory } from "./VersionHistory";
 
 const example =
-  "Spend at most $200 per day. Allow up to $100 per purchase. Ask me before any purchase of $50 or more. Only buy from Acme Office Supply and Paper Co. Never allow payouts.";
+  "Spend at most $200 per day. Allow up to $100 per purchase. Ask me before any purchase of $50 or more. Only buy from Paper Co. Never allow payouts.";
+
+const STUB = /^\s*(default demo policy)?\s*$/i;
 
 const NO_MODEL = "No model is available on this host. Rules can be edited as JSON below.";
 
@@ -55,7 +57,8 @@ export function PolicyEditor() {
   const [jsonText, setJsonText] = useState<string | null>(null);
   const [activated, setActivated] = useState<number | null>(null);
 
-  const text = draft ?? active.data?.source_text ?? "";
+  const written = active.data?.source_text ?? "";
+  const text = draft ?? (active.data && STUB.test(written) ? policyText(active.data.policy) : written);
   const stale = compiled !== null && compiledText !== text;
   const editing = jsonText !== null;
   const parsed = editing ? readPolicy(jsonText) : null;
@@ -134,7 +137,7 @@ export function PolicyEditor() {
             <textarea id="rules" rows={5} className="textarea" placeholder={example} value={text} onChange={(event) => setDraft(event.target.value)} />
           )}
           <div className="toolbar">
-            <button type="button" className="btn" onClick={compile} disabled={compiling || text.trim().length === 0}>
+            <button type="button" className={candidate ? "btn" : "btn btn-primary"} onClick={compile} disabled={compiling || text.trim().length === 0}>
               {compiling ? "Compiling" : "Compile"}
             </button>
             {draft !== null && active.data && (
@@ -187,43 +190,41 @@ export function PolicyEditor() {
             </p>
           )}
           {compiling ? (
-            <div className="pair" role="status">
+            <div role="status" style={{ display: "grid", gap: 16 }}>
               <span className="sr-only">Compiling your rules</span>
-              <Skeleton style={{ height: 240 }} />
-              <Skeleton style={{ height: 240 }} />
+              <Skeleton style={{ height: 200 }} />
             </div>
           ) : (
-            <div className="pair">
-              <div>
-                <h3 className="field-label">{compiled && !editing ? "Read back" : `Active v${active.data?.version ?? ""}`.trim()}</h3>
-                {compiled && !editing ? (
-                  <ReadBack lines={compiled.readback} />
-                ) : active.data ? (
-                  <ReadBack lines={policyLines(active.data.policy)} />
-                ) : (
-                  <p className="muted">No policy is active yet.</p>
-                )}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                {editing ? (
-                  <>
-                    <label htmlFor="policy-json" className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <PencilIcon size={14} />
-                      Policy JSON
-                    </label>
-                    <textarea id="policy-json" className="textarea json-editor" spellCheck={false} value={jsonText} onChange={(event) => setJsonText(event.target.value)} aria-describedby="json-check" />
-                    <p id="json-check" className="small" style={{ marginTop: 8, color: parsed?.problem ? "var(--block-ink)" : "var(--muted)" }}>
-                      {parsed?.problem ?? "Valid JSON. Missing keys get the strict defaults."}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="field-label">Policy JSON</h3>
-                    <JsonBlock value={compiled?.policy ?? active.data?.policy ?? {}} label="Policy JSON" />
-                  </>
-                )}
-              </div>
-            </div>
+            <>
+              <h3 className="field-label">{compiled && !editing ? "Read back" : `Active v${active.data?.version ?? ""}`.trim()}</h3>
+              {compiled && !editing ? (
+                <ReadBack lines={compiled.readback} />
+              ) : active.data ? (
+                <ReadBack lines={policyLines(active.data.policy)} />
+              ) : (
+                <p className="muted">No policy is active yet.</p>
+              )}
+              {editing ? (
+                <div style={{ marginTop: 16 }}>
+                  <label htmlFor="policy-json" className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <PencilIcon size={14} />
+                    Policy JSON
+                  </label>
+                  <textarea id="policy-json" className="textarea json-editor" spellCheck={false} value={jsonText} onChange={(event) => setJsonText(event.target.value)} aria-describedby="json-check" />
+                  <p id="json-check" className="small" style={{ marginTop: 8, color: parsed?.problem ? "var(--block-ink)" : "var(--muted)" }}>
+                    {parsed?.problem ?? "Valid JSON. Missing keys get the strict defaults."}
+                  </p>
+                </div>
+              ) : (
+                <details className="json-toggle">
+                  <summary>
+                    <ChevronRightIcon size={16} />
+                    View as JSON
+                  </summary>
+                  <JsonBlock value={compiled?.policy ?? active.data?.policy ?? {}} label="Policy JSON" />
+                </details>
+              )}
+            </>
           )}
           {active.data && candidate && (
             <div style={{ marginTop: 20 }}>
