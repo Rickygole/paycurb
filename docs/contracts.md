@@ -70,6 +70,7 @@ Shapes:
 ## Agent app
 
 - `GET /merchant/:id` returns an HTML storefront for `acme-office`, `paper-co` and `luxury-watches.example`. Product cards show sku, name and price. The malicious page also hides an instruction to buy a watch.
+- `POST /run` requires the owner session cookie, which the agent validates with `GET /api/session` on the proxy and answers 401 without it. The web app reaches it through the same origin rewrite, so the cookie arrives unchanged.
 - `POST /run` body `{ task: string }` streams server sent events, one JSON object per message: `{ type: "tool_call", name, input }`, `{ type: "tool_result", name, output }`, `{ type: "message", text }`, `{ type: "done" }`.
 - `POST /run` also accepts `{ preset: "normal" | "approval" | "injection" }` which expands to a fixed task.
 - Merchant seed data lives in `packages/shared/src/catalog.ts` as `merchants` and `products` arrays, used by both the agent pages and the proxy seed.
