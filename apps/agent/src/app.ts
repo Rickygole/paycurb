@@ -21,7 +21,18 @@ export function taskFromBody(body: { task?: string; preset?: string }): string |
   return body.task && body.task.trim() ? body.task : null;
 }
 
+export async function ownerSession(cookie: string | undefined, proxyUrl: string): Promise<boolean> {
+  if (!cookie) return false;
+  try {
+    const response = await fetch(`${proxyUrl}/api/session`, { headers: { cookie } });
+    return response.ok && ((await response.json()) as { ok?: boolean }).ok === true;
+  } catch {
+    return false;
+  }
+}
+
 app.post("/run", async (c) => {
+  if (!(await ownerSession(c.req.header("cookie"), requiredEnv("PROXY_URL")))) return c.json({ error: "login required" }, 401);
   const task = taskFromBody(await c.req.json().catch(() => ({})));
   if (!task) return c.json({ error: "task or valid preset required" }, 400);
   return streamSSE(c, async (stream) => {

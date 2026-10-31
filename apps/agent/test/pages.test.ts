@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { merchants, products } from "@paycurb/shared";
 import { app } from "../src/app";
 import { htmlToText } from "../src/browse";
@@ -52,8 +52,15 @@ describe("merchant pages", () => {
 });
 
 describe("run endpoint", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
   it("rejects a missing task", async () => {
-    const response = await app.request("/run", { method: "POST", body: JSON.stringify({}) });
+    vi.stubEnv("PROXY_URL", "http://proxy.test");
+    vi.stubGlobal("fetch", async () => Response.json({ ok: true }));
+    const response = await app.request("/run", { method: "POST", headers: { cookie: "paycurb_session=x" }, body: JSON.stringify({}) });
     expect(response.status).toBe(400);
   });
 });
