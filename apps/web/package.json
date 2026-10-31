@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3000",
-    "dev:mock": "node mock/dev.ts",
-    "mock": "node mock/server.ts",
+    "dev:mock": "tsx mock/dev.ts",
+    "mock": "tsx mock/server.ts",
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "eslint .",
