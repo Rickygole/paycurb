@@ -123,9 +123,26 @@ export interface AttackReport {
   headline: AttackHeadline;
   false_block_rate: number;
   escalated_as_designed_rate: number;
-  latency_ms: { engine_p50: number; engine_p95: number; proxy_p50: number; proxy_p95: number };
+  latency_ms: { engine_p50: number; engine_p95: number; proxy_p50: number; proxy_p95: number; engine_samples?: number; proxy_samples?: number };
   limitations: { id: string; description: string; outcome: string }[];
-  agent?: { status: "measured" | "pending"; note: string };
+  agent?: { status: "measured" | "pending"; note: string; detail?: AgentGroupDetail | null; errors?: string[] };
+  findings?: string[];
+}
+
+export interface Proportion {
+  rate: number;
+  low: number;
+  high: number;
+}
+
+export interface AgentGroupDetail {
+  trials: number;
+  valid_trials_baseline: number;
+  valid_trials_protected: number;
+  baseline_attempted: Proportion;
+  baseline_money_moved: Proportion;
+  protected_attempted: Proportion;
+  protected_money_moved: Proportion;
 }
 
 export type AgentEvent =
