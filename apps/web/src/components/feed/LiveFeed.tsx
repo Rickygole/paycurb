@@ -1,17 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, errorText, useApi } from "@/lib/api";
-import { useEventStream, type StreamStatus } from "@/lib/stream";
+import { useEventStream } from "@/lib/stream";
 import type { Feed, Stats } from "@/lib/types";
-import { ActivityIcon } from "../icons";
-import { Page, PageHeader } from "../Shell";
-import { EmptyState, ErrorState, LoadingBlock } from "../states";
+import { useLast } from "../Drawer";
+import { EmptyState, ErrorState, Skeleton } from "../states";
 import { DecisionCard } from "./DecisionCard";
 import { DecisionDrawer } from "./DecisionDrawer";
+import { Gate } from "./Gate";
 import { StatsStrip } from "./StatsStrip";
 
 const KEEP = 200;
+const SHOWN = 50;
 
 function merge(current: Feed[], incoming: Feed[]) {
   const seen = new Set(current.map((item) => item.id));
@@ -20,13 +22,26 @@ function merge(current: Feed[], incoming: Feed[]) {
   return [...added, ...current].sort((a, b) => b.ts.localeCompare(a.ts)).slice(0, KEEP);
 }
 
-function ConnectionPill({ status }: { status: StreamStatus }) {
-  const live = status === "live";
+function RowSkeletons() {
   return (
-    <span role="status" className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted">
-      <span className={`h-2 w-2 rounded-full ${live ? "bg-allow" : "bg-escalate"}`} aria-hidden="true" />
-      {live ? "Live" : status === "connecting" ? "Connecting, polling every 2 seconds" : "Stream offline, polling every 2 seconds"}
-    </span>
+    <ol aria-hidden="true">
+      {[0, 1, 2, 3, 4].map((index) => (
+        <li key={index}>
+          <div className="drow" style={{ cursor: "default" }}>
+            <Skeleton style={{ height: 24, width: 96, borderRadius: 999 }} />
+            <span className="drow-main" style={{ gap: 8 }}>
+              <Skeleton style={{ height: 14, width: `${70 - index * 6}%` }} />
+              <Skeleton style={{ height: 12, width: 160 }} />
+            </span>
+            <Skeleton style={{ height: 12, width: 150 }} />
+            <span className="drow-end" style={{ gap: 8 }}>
+              <Skeleton style={{ height: 14, width: 72 }} />
+              <Skeleton style={{ height: 12, width: 110 }} />
+            </span>
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -36,11 +51,12 @@ export function LiveFeed() {
   const [fresh, setFresh] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<Feed | null>(null);
+  const shown = useLast(open);
   const reloadStats = stats.reload;
 
   const fetchLatest = useCallback(
     (markFresh: boolean) =>
-      api<Feed[]>("/api/decisions?limit=50").then(
+      api<Feed[]>(`/api/decisions?limit=${SHOWN}`).then(
         (list) => {
           setError(null);
           setItems((current) => {
@@ -79,39 +95,44 @@ export function LiveFeed() {
     return () => clearInterval(timer);
   }, [status, fetchLatest, reloadStats]);
 
+  const list = items?.slice(0, SHOWN) ?? null;
+
   return (
-    <Page>
-      <PageHeader
-        title="Live Feed"
-        description="Every payment call your agent makes, decided by the policy engine before anything reaches PayPal."
-        actions={<ConnectionPill status={status} />}
-      />
+    <>
+      <Gate items={list} status={status} policyVersion={list?.[0]?.policy_version ?? null} />
       <StatsStrip stats={stats.data} error={stats.error} onRetry={stats.reload} />
-      <section aria-labelledby="decisions-heading" className="mt-8">
-        <h2 id="decisions-heading" className="mb-3 text-sm font-semibold text-muted">
-          Recent decisions
-        </h2>
-        {items === null && !error && <LoadingBlock label="Loading decisions" rows={5} />}
-        {items === null && error && <ErrorState title="Could not load decisions" message={error} onRetry={() => fetchLatest(false)} />}
+      <section className="panel decisions" aria-labelledby="decisions-heading" aria-busy={items === null && !error}>
+        <header className="panel-head">
+          <h2 id="decisions-heading">What your agent tried</h2>
+          <p className="small muted wide-only">{list && list.length > 0 ? `Newest first, last ${list.length}. Select a row for the full record.` : "Newest first"}</p>
+        </header>
+        {items === null && !error && <RowSkeletons />}
+        {items === null && error && (
+          <div className="panel-pad">
+            <ErrorState title="The decisions did not load" message={error} onRetry={() => fetchLatest(false)} />
+          </div>
+        )}
         {items !== null && error && (
-          <p role="status" className="mb-3 text-xs text-block">
+          <p role="status" className="small" style={{ padding: "10px 20px", color: "var(--block-ink)", borderBottom: "1px solid var(--rule)" }}>
             Updates paused: {error}
           </p>
         )}
-        {items !== null && items.length === 0 && (
-          <EmptyState title="No payment calls yet" icon={<ActivityIcon size={28} />}>
-            When your agent tries to pay for something, the decision shows up here within a second. Try a preset on the Demo Agent page.
-          </EmptyState>
+        {list !== null && list.length === 0 && (
+          <div className="panel-pad">
+            <EmptyState title="Nothing has tried to buy anything yet">
+              When your agent tries to pay, the decision lands here within a second. <Link href="/agent" className="link-btn">Run the agent</Link> to see one.
+            </EmptyState>
+          </div>
         )}
-        {items !== null && items.length > 0 && (
-          <ol className="space-y-2.5" aria-live="polite" aria-relevant="additions">
-            {items.map((item) => (
-              <DecisionCard key={item.id} item={item} fresh={fresh.has(item.id)} onOpen={setOpen} />
+        {list !== null && list.length > 0 && (
+          <ol aria-live="polite" aria-relevant="additions">
+            {list.map((item, index) => (
+              <DecisionCard key={item.id} item={item} index={index} fresh={fresh.has(item.id)} onOpen={setOpen} />
             ))}
           </ol>
         )}
       </section>
-      <DecisionDrawer item={open} onClose={() => setOpen(null)} />
-    </Page>
+      <DecisionDrawer item={shown} open={open !== null} onClose={() => setOpen(null)} />
+    </>
   );
 }
