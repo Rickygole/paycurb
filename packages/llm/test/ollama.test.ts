@@ -33,16 +33,23 @@ describe("createOllamaLlm", () => {
     expect(result.content).toEqual([{ type: "text", text: "done" }]);
   });
 
-  it("wraps structured output as the forced tool call", async () => {
+  it("sends only the forced tool and returns its call", async () => {
     let sent: any;
     const llm = createOllamaLlm("http://x", (async (_url: string, init: RequestInit) => {
       sent = JSON.parse(String(init.body));
-      return new Response(JSON.stringify({ message: { content: "{\"daily_limit_cents\":20000}" } }), { status: 200 });
+      return new Response(JSON.stringify({ message: { content: "", tool_calls: [{ function: { name: "submit_policy", arguments: { daily_limit_dollars: 200 } } }] } }), { status: 200 });
     }) as never);
+    const other = { ...tool, name: "other" };
+    const result = await llm.complete({ model: "m", system: "s", messages: [{ role: "user", content: "x" }], tools: [other, tool], toolChoice: { type: "tool", name: "submit_policy" } });
+    expect(sent.format).toBeUndefined();
+    expect(sent.tools.map((item: any) => item.function.name)).toEqual(["submit_policy"]);
+    expect(result.content[0]).toMatchObject({ type: "tool_use", name: "submit_policy", input: { daily_limit_dollars: 200 } });
+  });
+
+  it("falls back to a JSON reply for a forced tool", async () => {
+    const llm = createOllamaLlm("http://x", reply({ content: "{\"daily_limit_dollars\":200}" }) as never);
     const result = await llm.complete({ model: "m", system: "s", messages: [{ role: "user", content: "x" }], tools: [tool], toolChoice: { type: "tool", name: "submit_policy" } });
-    expect(sent.format).toEqual(tool.input_schema);
-    expect(sent.tools).toBeUndefined();
-    expect(result.content[0]).toMatchObject({ type: "tool_use", name: "submit_policy", input: { daily_limit_cents: 20000 } });
+    expect(result.content[0]).toMatchObject({ type: "tool_use", name: "submit_policy", input: { daily_limit_dollars: 200 } });
   });
 
   it("reports a failing server", async () => {

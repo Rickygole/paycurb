@@ -62,6 +62,15 @@ function buildReply(model: string, text: string, calls: { name: string; input: R
   } as unknown as Reply;
 }
 
+function parseObject(text: string): Record<string, unknown> | null {
+  try {
+    const value = JSON.parse(text);
+    return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 export function createOllamaLlm(baseUrl = process.env.OLLAMA_URL ?? "http://localhost:11434", fetchImpl: typeof fetch = fetch): LlmClient {
   return {
     async complete({ model, system, messages, tools, toolChoice, maxTokens = 1024, temperature = 0 }) {
@@ -72,17 +81,17 @@ export function createOllamaLlm(baseUrl = process.env.OLLAMA_URL ?? "http://loca
         think: false,
         messages: toOllamaMessages(system, messages),
         options: { temperature, num_predict: maxTokens },
-        ...(forced ? { format: forced.input_schema } : tools && tools.length > 0 ? { tools: toOllamaTools(tools) } : {}),
+        ...(tools && tools.length > 0 ? { tools: toOllamaTools(forced ? [forced] : tools) } : {}),
       };
       const response = await fetchImpl(`${baseUrl}/api/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       if (!response.ok) throw new Error(`ollama returned ${response.status}`);
       const payload: any = await response.json();
       const text: string = payload.message?.content ?? "";
-      if (forced) {
-        const parsed = JSON.parse(text);
-        return buildReply(model, "", [{ name: forced.name, input: parsed }]);
-      }
       const calls = (payload.message?.tool_calls ?? []).map((call: any) => ({ name: call.function.name, input: call.function.arguments ?? {} }));
+      if (forced && calls.length === 0) {
+        const parsed = parseObject(text);
+        if (parsed) return buildReply(model, "", [{ name: forced.name, input: parsed }]);
+      }
       return buildReply(model, text, calls);
     },
   };
