@@ -8,7 +8,7 @@ export const groupNames: Record<string, string> = {
   E: "Refund and payout abuse",
   F: "Malformed and unknown calls",
   G: "Retries and duplicates",
-  H: "Legitimate purchases (control)",
+  H: "Legitimate purchases",
 };
 
 export const attackGroups = (groups: AttackGroup[]) => groups.filter((group) => group.group !== "H");
