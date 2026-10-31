@@ -14,12 +14,10 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
     credentials: "same-origin",
+    cache: "no-store",
     headers: init?.body ? { "content-type": "application/json", ...init?.headers } : init?.headers,
   });
   const body = await response.json().catch(() => null);
-  if (response.status === 401 && !path.startsWith("/api/login") && typeof window !== "undefined") {
-    window.location.href = "/login";
-  }
   if (!response.ok) {
     const message = body && typeof body.error === "string" ? body.error : `Request failed with status ${response.status}`;
     throw new ApiError(message, response.status);
@@ -31,6 +29,8 @@ export const postJson = <T>(path: string, body?: unknown) =>
   api<T>(path, { method: "POST", body: JSON.stringify(body ?? {}) });
 
 export function errorText(error: unknown) {
+  if (error instanceof ApiError && error.status === 401) return "Your session ended. Sign in again to continue.";
+  if (error instanceof TypeError) return "The server could not be reached. Check that the proxy is running.";
   if (error instanceof Error) return error.message;
   return "Something went wrong";
 }
@@ -40,24 +40,28 @@ export function useApi<T>(path: string, refreshMs?: number) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const reload = useCallback(async () => {
-    try {
-      const next = await api<T>(path);
-      setData(next);
-      setError(null);
-    } catch (problem) {
-      setError(errorText(problem));
-    } finally {
-      setLoading(false);
-    }
-  }, [path]);
+  const load = useCallback(
+    () =>
+      api<T>(path).then(
+        (next) => {
+          setData(next);
+          setError(null);
+          setLoading(false);
+        },
+        (problem) => {
+          setError(errorText(problem));
+          setLoading(false);
+        },
+      ),
+    [path],
+  );
 
   useEffect(() => {
-    void reload();
+    load();
     if (!refreshMs) return;
-    const timer = setInterval(() => void reload(), refreshMs);
+    const timer = setInterval(load, refreshMs);
     return () => clearInterval(timer);
-  }, [reload, refreshMs]);
+  }, [load, refreshMs]);
 
-  return { data, error, loading, reload, setData };
+  return { data, error, loading, reload: load, setData };
 }
