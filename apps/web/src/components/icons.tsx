@@ -208,9 +208,10 @@ export const PencilIcon = (props: IconProps) => (
 export function GateMark({ size = 20, className }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false" className={className}>
-      <path d="M11 2.5v4.5M11 13v4.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M2.5 10h5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="16" cy="10" r="1.75" fill="currentColor" />
+      <rect x="8.5" y="1.5" width="4" height="6.5" rx="2" fill="currentColor" />
+      <rect x="8.5" y="12" width="4" height="6.5" rx="2" fill="currentColor" />
+      <path d="M2 10h3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M15.5 10H18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.45" />
     </svg>
   );
 }
