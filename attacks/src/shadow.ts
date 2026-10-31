@@ -28,9 +28,12 @@ export class Shadow {
 
   constructor(private policy: Policy) {}
 
-  register(id: string, action: Action, nowMs: number) {
+  register(id: string, action: Action, nowMs: number): string {
+    const existing = this.approvals.find((approval) => approval.id === id || (approval.payload_hash === action.payload_hash && approval.status === "pending"));
+    if (existing) return existing.id;
     const expires_at_ms = nowMs + this.policy.approval_ttl_minutes * 60_000;
     this.approvals.push({ id, payload_hash: action.payload_hash, amount_cents: action.amount_cents, status: "pending", expires_at_ms });
+    return id;
   }
 
   decide(id: string, verdict: "approved" | "rejected", nowMs: number) {
