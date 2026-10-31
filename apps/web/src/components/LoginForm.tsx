@@ -1,9 +1,10 @@
 "use client";
 
+import "./ledger.css";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ApiError, errorText, postJson } from "@/lib/api";
-import { AlertIcon, ShieldIcon } from "./icons";
+import { AlertIcon, GateMark } from "./icons";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function LoginForm() {
@@ -26,21 +27,22 @@ export function LoginForm() {
   }
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center px-4 py-10">
-      <div className="absolute top-4 right-4">
+    <div className="ledger" style={{ display: "grid", placeItems: "center", padding: "40px 16px" }}>
+      <div style={{ position: "fixed", top: 8, right: 16 }}>
         <ThemeToggle />
       </div>
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-accent-contrast shadow-pop">
-            <ShieldIcon size={26} strokeWidth={2.25} />
-          </span>
-          <h1 className="text-2xl font-bold tracking-tight">Sign in to Paycurb</h1>
-          <p className="mt-1.5 text-sm text-muted">The payment firewall between your shopping agent and PayPal.</p>
-        </div>
-        <form onSubmit={submit} className="card space-y-4 p-6" noValidate>
+      <main className="rise" style={{ width: "min(380px, 100%)" }}>
+        <p className="brand" style={{ marginBottom: 28 }}>
+          <GateMark size={26} className="mark" />
+          Paycurb
+        </p>
+        <h1 className="title">Sign in</h1>
+        <p className="lede" style={{ marginBottom: 24 }}>
+          The payment firewall between your shopping agent and PayPal.
+        </p>
+        <form onSubmit={submit} className="panel panel-pad" style={{ display: "grid", gap: 16 }} noValidate>
           <div>
-            <label htmlFor="password" className="label">
+            <label htmlFor="password" className="field-label">
               Owner password
             </label>
             <input
@@ -58,17 +60,19 @@ export function LoginForm() {
             />
           </div>
           {error && (
-            <p id="login-error" role="alert" className="flex items-center gap-2 text-sm text-block">
-              <AlertIcon size={15} className="shrink-0" />
+            <p id="login-error" role="alert" className="notice" style={{ color: "var(--block-ink)" }}>
+              <AlertIcon size={16} />
               {error}
             </p>
           )}
-          <button type="submit" className="btn-primary w-full" disabled={busy || password.length === 0}>
-            {busy ? "Signing in..." : "Sign in"}
+          <button type="submit" className="btn btn-primary" style={{ height: 40 }} disabled={busy || password.length === 0}>
+            {busy ? "Signing in" : "Sign in"}
           </button>
         </form>
-        <p className="mt-6 text-center text-xs text-muted">Runs against the PayPal sandbox only.</p>
-      </div>
+        <p className="small muted" style={{ marginTop: 16 }}>
+          Runs against the PayPal sandbox only.
+        </p>
+      </main>
     </div>
   );
 }
