@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
-import { dollars, formatDateTime, merchantName } from "@/lib/format";
+import { dayLabel, clock, dollars, merchantName } from "@/lib/format";
 import { useEventStream } from "@/lib/stream";
 import type { ApprovalCard } from "@/lib/types";
-import { InboxIcon } from "../icons";
-import { Page, PageHeader } from "../Shell";
-import { EmptyState, ErrorState, LoadingBlock } from "../states";
-import { ApprovalCardView } from "./ApprovalCardView";
+import { PageHeader } from "../Shell";
+import { EmptyState, ErrorState, Skeleton } from "../states";
+import { ApprovalCardView, executionTone } from "./ApprovalCardView";
 
 function useNow() {
   const [now, setNow] = useState(() => Date.now());
@@ -20,12 +19,94 @@ function useNow() {
 }
 
 const historyWords: Record<ApprovalCard["status"], string> = {
-  pending: "Pending",
+  pending: "Waiting",
   approved: "Approved",
   rejected: "Rejected",
   expired: "Expired",
   executed: "Executed",
 };
+
+function HeldSkeleton() {
+  return (
+    <div className="panel held" aria-hidden="true">
+      <div className="held-head">
+        <Skeleton style={{ height: 20, width: 180 }} />
+        <Skeleton style={{ height: 26, width: 96 }} />
+      </div>
+      <Skeleton style={{ height: 14, width: "60%" }} />
+      <Skeleton style={{ height: 72 }} />
+      <div className="held-foot">
+        <Skeleton style={{ height: 16, width: 140 }} />
+        <Skeleton style={{ height: 36, width: 220 }} />
+      </div>
+    </div>
+  );
+}
+
+function WhatHappens() {
+  return (
+    <aside className="panel panel-pad" aria-labelledby="approve-steps">
+      <h2 id="approve-steps" className="section-title" style={{ fontSize: 16 }}>
+        What happens on approve
+      </h2>
+      <ol className="steps" style={{ marginTop: 8 }}>
+        <li>Paycurb records your approval for this exact order, matched by its payload hash.</li>
+        <li>Your agent repeats the identical call. A different merchant, item or amount is a new order and is checked again.</li>
+        <li>The proxy sends that call to PayPal. The status PayPal returns and its reference show on the order.</li>
+      </ol>
+      <p className="small muted" style={{ marginTop: 8 }}>
+        Reject, or let the timer run out, and nothing is paid.
+      </p>
+    </aside>
+  );
+}
+
+function History({ cards }: { cards: ApprovalCard[] }) {
+  return (
+    <section className="panel" aria-labelledby="history-heading">
+      <header className="panel-head">
+        <h2 id="history-heading">Recently decided</h2>
+        <p className="small muted">{cards.length === 0 ? "None yet" : `Last ${cards.length}`}</p>
+      </header>
+      {cards.length === 0 ? (
+        <p className="panel-pad muted">Orders you approve or reject, and ones that expire, are listed here.</p>
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table className="history">
+            <thead>
+              <tr>
+                <th scope="col">Merchant</th>
+                <th scope="col" className="n">
+                  Amount
+                </th>
+                <th scope="col">Request</th>
+                <th scope="col">Execution</th>
+                <th scope="col">PayPal reference</th>
+                <th scope="col" className="n">
+                  Held at
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {cards.map((card) => (
+                <tr key={card.id}>
+                  <td>{merchantName(card.merchant_id, card.merchant_name)}</td>
+                  <td className="n num">{dollars(card.amount_cents)}</td>
+                  <td>{historyWords[card.status] ?? card.status}</td>
+                  <td>{card.execution ? <span className={`status ${executionTone(card.execution.status)}`}>{card.execution.status}</span> : <span className="missing" role="img" aria-label="None" />}</td>
+                  <td>{card.execution?.paypal_ref ? <span className="mono">{card.execution.paypal_ref}</span> : <span className="missing" role="img" aria-label="None" />}</td>
+                  <td className="n num muted" title={new Date(card.created_at).toLocaleString()}>
+                    {dayLabel(card.created_at)}, {clock(card.created_at)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
 
 export function Approvals() {
   const all = useApi<ApprovalCard[]>("/api/approvals", 3000);
@@ -55,79 +136,46 @@ export function Approvals() {
   const active = list
     .filter((card) => card.status === "pending" || touched.includes(card.id))
     .sort((a, b) => a.expires_at.localeCompare(b.expires_at));
-  const history = list.filter((card) => card.status !== "pending" && !touched.includes(card.id)).slice(0, 25);
+  const history = list.filter((card) => card.status !== "pending" && !touched.includes(card.id)).slice(0, 8);
   const waiting = active.filter((card) => card.status === "pending").length;
 
   return (
-    <Page>
+    <>
       <PageHeader
         title="Approvals"
-        description="Purchases the policy sent to you. Nothing is paid until you approve, and the agent must repeat the exact same order."
-        actions={
-          waiting > 0 ? (
-            <span className="rounded-full bg-escalate-soft px-3 py-1 text-xs font-semibold text-escalate num">{waiting} waiting</span>
-          ) : undefined
+        description={
+          all.data
+            ? waiting === 0
+              ? "No held orders right now. The policy sends an order here when it is over your approval line, from a new merchant, or a repeat."
+              : `${waiting} held ${waiting === 1 ? "order is" : "orders are"} waiting for you. Nothing is paid until you approve.`
+            : "Orders the policy held for you. Nothing is paid until you approve."
         }
       />
-      {all.loading && <LoadingBlock label="Loading approvals" rows={2} />}
-      {!all.loading && all.error && !all.data && <ErrorState title="Could not load approvals" message={all.error} onRetry={all.reload} />}
-      {all.data && (
-        <>
-          {all.error && (
-            <p role="status" className="mb-3 text-xs text-block">
+      <div className="split">
+        <div className="stack">
+          {all.loading && (
+            <div role="status" className="stack">
+              <span className="sr-only">Loading held orders</span>
+              <HeldSkeleton />
+              <HeldSkeleton />
+            </div>
+          )}
+          {!all.loading && all.error && !all.data && <ErrorState title="Held orders did not load" message={all.error} onRetry={all.reload} />}
+          {all.data && all.error && (
+            <p role="status" className="small" style={{ color: "var(--block-ink)" }}>
               Updates paused: {all.error}
             </p>
           )}
-          {active.length === 0 ? (
-            <EmptyState title="Nothing needs your approval" icon={<InboxIcon size={28} />}>
-              When a purchase is over the auto approve line, at a new merchant, or looks like a repeat, it waits here for you.
-            </EmptyState>
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
-              {active.map((card) => (
-                <ApprovalCardView key={card.id} card={card} nowMs={now} onChange={acted} />
-              ))}
-            </div>
+          {all.data && active.length === 0 && (
+            <EmptyState title="No orders are waiting for you">When the policy holds an order, it lands here with a timer and the exact items.</EmptyState>
           )}
-          <section aria-labelledby="history-heading" className="mt-10">
-            <h2 id="history-heading" className="mb-3 text-sm font-semibold text-muted">
-              Recently decided
-            </h2>
-            {history.length === 0 ? (
-              <p className="text-sm text-muted">No decided requests yet.</p>
-            ) : (
-              <div className="card overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-line text-left text-xs text-muted">
-                      <th scope="col" className="px-4 py-2.5 font-medium">Requested</th>
-                      <th scope="col" className="px-4 py-2.5 font-medium">Merchant</th>
-                      <th scope="col" className="px-4 py-2.5 text-right font-medium">Amount</th>
-                      <th scope="col" className="px-4 py-2.5 font-medium">Rule</th>
-                      <th scope="col" className="px-4 py-2.5 font-medium">Status</th>
-                      <th scope="col" className="px-4 py-2.5 font-medium">Execution</th>
-                      <th scope="col" className="px-4 py-2.5 font-medium">PayPal ref</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((card) => (
-                      <tr key={card.id} className="border-b border-line last:border-b-0">
-                        <td className="px-4 py-2.5 whitespace-nowrap text-muted num">{formatDateTime(card.created_at)}</td>
-                        <td className="px-4 py-2.5">{merchantName(card.merchant_id, card.merchant_name)}</td>
-                        <td className="px-4 py-2.5 text-right font-semibold num">{dollars(card.amount_cents)}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs">{card.rule_id}</td>
-                        <td className="px-4 py-2.5">{historyWords[card.status] ?? card.status}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs">{card.execution?.status ?? "None"}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs">{card.execution?.paypal_ref ?? "None"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        </>
-      )}
-    </Page>
+          {active.map((card, index) => (
+            <ApprovalCardView key={card.id} card={card} index={index} nowMs={now} onChange={acted} />
+          ))}
+          {all.data && <History cards={history} />}
+        </div>
+        <WhatHappens />
+      </div>
+    </>
   );
 }
