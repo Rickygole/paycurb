@@ -1,16 +1,16 @@
-import type { ReactNode } from "react";
-import { AlertIcon, InboxIcon } from "./icons";
+import type { CSSProperties, ReactNode } from "react";
+import { AlertIcon } from "./icons";
 
-export function Skeleton({ className = "" }: { className?: string }) {
-  return <div aria-hidden="true" className={`animate-skeleton rounded-md bg-surface-3 ${className}`} />;
+export function Skeleton({ className = "", style }: { className?: string; style?: CSSProperties }) {
+  return <span aria-hidden="true" className={`sk ${className}`} style={style} />;
 }
 
-export function LoadingBlock({ label, rows = 3 }: { label: string; rows?: number }) {
+export function LoadingBlock({ label, rows = 3, height = 64 }: { label: string; rows?: number; height?: number }) {
   return (
-    <div role="status" aria-live="polite" className="space-y-3">
+    <div role="status" style={{ display: "grid", gap: 12 }}>
       <span className="sr-only">{label}</span>
       {Array.from({ length: rows }, (_, index) => (
-        <Skeleton key={index} className="h-16 w-full" />
+        <Skeleton key={index} style={{ height }} />
       ))}
     </div>
   );
@@ -18,14 +18,13 @@ export function LoadingBlock({ label, rows = 3 }: { label: string; rows?: number
 
 export function ErrorState({ title, message, onRetry }: { title: string; message: string; onRetry?: () => void }) {
   return (
-    <div role="alert" className="flex items-start gap-3 rounded-lg border border-block/30 bg-block-soft p-4 text-sm">
-      <AlertIcon size={18} className="mt-0.5 shrink-0 text-block" />
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-fg">{title}</p>
-        <p className="mt-0.5 break-words text-muted">{message}</p>
-      </div>
+    <div role="alert" className="problem">
+      <AlertIcon size={18} />
+      <p>
+        <strong style={{ fontWeight: 500 }}>{title}.</strong> <span className="muted">{message}</span>
+      </p>
       {onRetry && (
-        <button type="button" onClick={onRetry} className="btn-secondary shrink-0">
+        <button type="button" onClick={onRetry} className="btn btn-sm">
           Try again
         </button>
       )}
@@ -33,12 +32,11 @@ export function ErrorState({ title, message, onRetry }: { title: string; message
   );
 }
 
-export function EmptyState({ title, children, icon }: { title: string; children?: ReactNode; icon?: ReactNode }) {
+export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-line-strong px-6 py-12 text-center">
-      <div className="mb-3 text-muted">{icon ?? <InboxIcon size={28} />}</div>
-      <p className="font-semibold text-fg">{title}</p>
-      {children && <div className="mt-1 max-w-md text-sm text-muted">{children}</div>}
+    <div className="empty">
+      <strong>{title}</strong>
+      {children && <p style={{ maxWidth: "52ch" }}>{children}</p>}
     </div>
   );
 }
