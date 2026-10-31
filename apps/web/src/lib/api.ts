@@ -36,7 +36,7 @@ export function errorText(error: unknown) {
   return "Something went wrong";
 }
 
-export function useApi<T>(path: string, refreshMs?: number) {
+export function useApi<T>(path: string | null, refreshMs?: number) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,9 @@ export function useApi<T>(path: string, refreshMs?: number) {
 
   const load = useCallback(
     () =>
-      api<T>(path).then(
+      path === null
+        ? Promise.resolve()
+        : api<T>(path).then(
         (next) => {
           setData(next);
           setError(null);
