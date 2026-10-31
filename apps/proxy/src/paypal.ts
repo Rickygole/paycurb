@@ -1,6 +1,7 @@
 import { fromCents } from "@paycurb/shared";
 import { config } from "./config";
 
+const requestTimeoutMs = 20_000;
 const sandboxBase = "https://api-m.sandbox.paypal.com";
 const sandboxTestCard = { number: "4111111111111111", expiry: "2030-12", security_code: "123", name: "Sandbox Buyer" };
 
@@ -49,6 +50,7 @@ export function createPayPalGateway(fetchImpl: typeof fetch = fetch): PayPalGate
       method: "POST",
       headers: { Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`, "Content-Type": "application/x-www-form-urlencoded" },
       body: "grant_type=client_credentials",
+      signal: AbortSignal.timeout(requestTimeoutMs),
     });
     if (!response.ok) throw new PayPalError(response.status, "authentication failed");
     const body: any = await response.json();
@@ -65,6 +67,7 @@ export function createPayPalGateway(fetchImpl: typeof fetch = fetch): PayPalGate
         ...(requestId ? { "PayPal-Request-Id": requestId } : {}),
       },
       body: payload === undefined ? undefined : JSON.stringify(payload),
+      signal: AbortSignal.timeout(requestTimeoutMs),
     });
     const body: any = await response.json().catch(() => ({}));
     if (!response.ok) throw new PayPalError(response.status, body.details?.[0]?.issue ?? body.name ?? "request failed");
