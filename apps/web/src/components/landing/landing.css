@@ -748,7 +748,7 @@
 }
 
 .limits {
-  max-width: 72ch;
+  max-width: 62ch;
   color: var(--soft);
   font-size: 15px;
 }
