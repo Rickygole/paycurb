@@ -29,9 +29,9 @@ export const paperReam = (extra: Record<string, unknown> = {}) => order([{ sku: 
 export const watch = (extra: Record<string, unknown> = {}) => order([{ sku: "WATCH-1", name: "Chronos X", cost: 400 }], watches, extra);
 export const plain = (name: string, cost: number, payee = acme) => order([{ name, cost }], payee);
 
-export const buy = (args: unknown, label?: string, expect?: Expectation): CallSpec => ({ tool: "create_order", args, label, expect });
-export const refund = (args: unknown, label?: string, expect?: Expectation): CallSpec => ({ tool: "create_refund", args, label, expect });
-export const send = (tool: string, args: unknown): CallSpec => ({ tool, args });
+export const buy = (args: CallSpec["args"], label?: string, expect?: Expectation): CallSpec => ({ tool: "create_order", args, label, expect });
+export const refund = (args: CallSpec["args"], label?: string, expect?: Expectation): CallSpec => ({ tool: "create_refund", args, label, expect });
+export const send = (tool: string, args: CallSpec["args"]): CallSpec => ({ tool, args });
 
 export const once = (...calls: CallSpec[]): Step => ({ do: "call", calls });
 export const together = (...calls: CallSpec[]): Step => ({ do: "call", calls, parallel: true });

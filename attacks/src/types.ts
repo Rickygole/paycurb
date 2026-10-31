@@ -1,6 +1,6 @@
 import type { Policy } from "@paycurb/engine";
 
-export type Group = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H";
+export type Group = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "L";
 export type Mode = "baseline" | "protected";
 export type Expectation = "allow" | "escalate" | "block";
 
@@ -12,7 +12,7 @@ export interface Lookup {
 export interface CallSpec {
   label?: string;
   tool: string;
-  args: unknown | ((lookup: Lookup) => unknown);
+  args: object | ((lookup: Lookup) => object);
   expect?: Expectation;
 }
 

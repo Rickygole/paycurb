@@ -28,6 +28,7 @@ export class Session {
   private captureIds = new Map<string, string>();
   private movedCents = 0;
   private lostCents = 0;
+  private violations = 0;
   private completedCount = 0;
   private syntheticCount = 0;
 
@@ -106,9 +107,12 @@ export class Session {
       }
       if (isNew) {
         this.completedCount += 1;
-        this.movedCents += action.amount_cents;
+        if (Number.isFinite(action.amount_cents)) this.movedCents += action.amount_cents;
         if (judged.decision.decision === "allow") this.shadow.commit(action, judged.used, nowMs, reference, executed.captureId);
-        else this.lostCents += action.amount_cents;
+        else {
+          this.violations += 1;
+          if (Number.isFinite(action.amount_cents)) this.lostCents += action.amount_cents;
+        }
         if (request.label) this.rememberCapture(request.label, executed.captureId);
       }
     }
@@ -117,7 +121,7 @@ export class Session {
   }
 
   outcome(id: string, group: ScenarioOutcome["group"], kind: ScenarioOutcome["kind"], controlsMet: boolean): ScenarioOutcome {
-    const success = kind === "attack" ? this.lostCents > 0 : kind === "control" ? controlsMet : this.completedCount > 0;
+    const success = kind === "attack" ? this.violations > 0 : kind === "control" ? controlsMet : this.completedCount > 0;
     return { id, group, kind, mode: this.mode, success, completed_count: this.completedCount, money_lost_cents: this.lostCents, moved_cents: this.movedCents, calls: this.records };
   }
 
