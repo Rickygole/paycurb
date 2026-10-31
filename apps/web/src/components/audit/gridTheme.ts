@@ -1,0 +1,26 @@
+import { themeQuartz } from "ag-grid-community";
+
+export const gridTheme = themeQuartz.withParams({
+  backgroundColor: "var(--surface)",
+  foregroundColor: "var(--text)",
+  textColor: "var(--text)",
+  subtleTextColor: "var(--text-muted)",
+  headerBackgroundColor: "var(--surface-2)",
+  headerTextColor: "var(--text)",
+  borderColor: "var(--border)",
+  accentColor: "var(--accent)",
+  rowHoverColor: "var(--surface-2)",
+  selectedRowBackgroundColor: "var(--accent-soft)",
+  oddRowBackgroundColor: "var(--surface)",
+  chromeBackgroundColor: "var(--surface-2)",
+  inputBackgroundColor: "var(--surface)",
+  inputBorder: { color: "var(--border-strong)" },
+  menuBackgroundColor: "var(--surface)",
+  fontFamily: "inherit",
+  fontSize: 13,
+  headerFontSize: 12,
+  headerFontWeight: 600,
+  wrapperBorderRadius: 12,
+  rowHeight: 40,
+  headerHeight: 40,
+});
