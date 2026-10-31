@@ -1,9 +1,10 @@
 import { parseToolOutput } from "@/lib/agentRun";
-import { dollars } from "@/lib/format";
+import { dollars, plainReason } from "@/lib/format";
 import type { AgentEvent, Outcome } from "@/lib/types";
 import { DecisionBadge } from "../DecisionBadge";
 import { JsonBlock } from "../Drawer";
-import { AlertIcon, BotIcon, ShieldIcon, WrenchIcon } from "../icons";
+import { RouteStrip } from "../feed/RouteStrip";
+import { AlertIcon, GateMark, WrenchIcon } from "../icons";
 
 export type Entry = { id: number; run: number } & (AgentEvent | { type: "task"; text: string } | { type: "error"; text: string });
 
@@ -17,9 +18,11 @@ interface OrderItem {
 
 function Raw({ value, label }: { value: unknown; label: string }) {
   return (
-    <details className="mt-2">
-      <summary className="cursor-pointer text-xs font-medium text-muted hover:text-fg">Show raw JSON</summary>
-      <div className="mt-2">
+    <details style={{ marginTop: 8 }}>
+      <summary className="link-btn small" style={{ display: "inline", listStyle: "none" }}>
+        Raw JSON
+      </summary>
+      <div style={{ marginTop: 8 }}>
         <JsonBlock value={value} label={label} />
       </div>
     </details>
@@ -31,28 +34,23 @@ function ToolCall({ name, input }: { name: string; input: unknown }) {
   const items = Array.isArray(data.items) ? data.items : [];
   const total = items.reduce((sum, item) => sum + Math.round((item.itemTotal ?? 0) * 100), 0);
   return (
-    <div className="rounded-xl border border-line bg-surface p-4">
-      <p className="flex items-center gap-2 text-xs font-semibold text-muted">
+    <div className="bubble call">
+      <p className="bubble-label">
         <WrenchIcon size={14} />
-        Tool call <span className="font-mono text-fg">{name}</span>
+        Calls {name}
       </p>
-      {data.payee && (
-        <p className="mt-2 text-sm">
-          <span className="text-muted">Pay to </span>
-          <span className="font-mono text-[13px]">{data.payee}</span>
-        </p>
-      )}
+      {data.payee && <p className="mono">{data.payee}</p>}
       {items.length > 0 && (
-        <ul className="mt-2 space-y-1 text-sm">
+        <ul style={{ margin: "6px 0 0", padding: 0, listStyle: "none" }}>
           {items.map((item, index) => (
-            <li key={`${item.sku ?? item.name}-${index}`} className="flex justify-between gap-4">
+            <li key={`${item.sku ?? item.name}-${index}`} style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
               <span>
-                {item.quantity ?? 1} x {item.name ?? item.sku}
+                <span className="num">{item.quantity ?? 1}</span> x {item.name ?? item.sku}
               </span>
               <span className="num">{dollars(Math.round((item.itemTotal ?? 0) * 100))}</span>
             </li>
           ))}
-          <li className="flex justify-between gap-4 border-t border-line pt-1 font-semibold">
+          <li style={{ display: "flex", justifyContent: "space-between", gap: 16, marginTop: 4, paddingTop: 4, borderTop: "1px solid var(--rule)", fontWeight: 500 }}>
             <span>Total</span>
             <span className="num">{dollars(total)}</span>
           </li>
@@ -68,32 +66,33 @@ function ToolResult({ name, output }: { name: string; output: unknown }) {
   const decision = result?.decision as Outcome | undefined;
   const order = result?.order as { id?: string; status?: string } | undefined;
   return (
-    <div className="rounded-xl border border-line bg-surface-2 p-4">
-      <p className="flex items-center gap-2 text-xs font-semibold text-muted">
-        <ShieldIcon size={14} />
-        Paycurb response to <span className="font-mono text-fg">{name}</span>
+    <div className="bubble">
+      <p className="bubble-label">
+        <GateMark size={14} className="mark" />
+        Paycurb answers {name}
       </p>
       {decision ? (
-        <div className="mt-2 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
+        <div style={{ display: "grid", gap: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
             <DecisionBadge decision={decision} />
-            {typeof result?.rule_id === "string" && <span className="rounded bg-surface-3 px-1.5 py-0.5 font-mono text-xs font-semibold">{result.rule_id}</span>}
+            <RouteStrip decision={decision} />
           </div>
-          {typeof result?.reason === "string" && <p className="text-sm">{result.reason}</p>}
+          {typeof result?.reason === "string" && (
+            <p style={{ fontWeight: 500 }}>
+              {plainReason({ tool: name, decision, reason: result.reason })}
+              {typeof result?.rule_id === "string" && <span className="muted" style={{ fontWeight: 400 }}> · Rule {result.rule_id}</span>}
+            </p>
+          )}
           {order?.id && (
-            <p className="text-sm text-muted">
-              PayPal order <span className="font-mono text-fg">{order.id}</span>
-              {order.status && <> with status <span className="font-mono text-fg">{order.status}</span></>}
+            <p className="muted">
+              PayPal order <span className="mono">{order.id}</span>
+              {order.status && <>, status {order.status}</>}
             </p>
           )}
-          {typeof result?.approval_id === "string" && (
-            <p className="text-sm text-muted">
-              Approval request <span className="font-mono text-fg">{result.approval_id}</span> is waiting on the Approvals page.
-            </p>
-          )}
+          {typeof result?.approval_id === "string" && <p className="muted">Waiting on the Approvals page.</p>}
         </div>
       ) : (
-        <p className="mt-2 text-sm">{typeof output === "string" ? output : "The response had no decision."}</p>
+        <p>{typeof output === "string" ? output : "The response had no decision."}</p>
       )}
       <Raw value={result ?? output} label={`${name} response JSON`} />
     </div>
@@ -103,48 +102,45 @@ function ToolResult({ name, output }: { name: string; output: unknown }) {
 export function TranscriptItem({ entry }: { entry: Entry }) {
   if (entry.type === "task") {
     return (
-      <li className="animate-enter flex justify-end">
-        <p className="max-w-[80%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm text-accent-contrast">{entry.text}</p>
+      <li className="in-both arrive" style={{ display: "grid" }}>
+        <p className="bubble ask">{entry.text}</p>
       </li>
     );
   }
   if (entry.type === "message") {
     return (
-      <li className="animate-enter flex gap-3">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-3 text-muted" aria-hidden="true">
-          <BotIcon size={15} />
-        </span>
-        <p className="max-w-[85%] rounded-2xl rounded-tl-md border border-line bg-surface px-4 py-2.5 text-sm leading-relaxed">{entry.text}</p>
+      <li className="in-agent arrive">
+        <p className="bubble">{entry.text}</p>
       </li>
     );
   }
   if (entry.type === "tool_call") {
     return (
-      <li className="animate-enter ml-10">
+      <li className="in-agent arrive">
         <ToolCall name={entry.name} input={entry.input} />
       </li>
     );
   }
   if (entry.type === "tool_result") {
     return (
-      <li className="animate-enter ml-10">
+      <li className="in-gate arrive">
         <ToolResult name={entry.name} output={entry.output} />
       </li>
     );
   }
   if (entry.type === "error") {
     return (
-      <li role="alert" className="animate-enter ml-10 flex items-center gap-2 rounded-lg bg-block-soft px-4 py-3 text-sm text-block">
-        <AlertIcon size={15} className="shrink-0" />
-        {entry.text}
+      <li role="alert" className="in-both arrive">
+        <p className="notice" style={{ color: "var(--block-ink)" }}>
+          <AlertIcon size={16} />
+          {entry.text}
+        </p>
       </li>
     );
   }
   return (
-    <li className="flex items-center gap-3 text-xs text-muted" aria-label="Run finished">
-      <span className="h-px flex-1 bg-line" />
-      Run finished
-      <span className="h-px flex-1 bg-line" />
+    <li className="in-both" aria-label="Run finished">
+      <p className="run-end">Run finished</p>
     </li>
   );
 }
