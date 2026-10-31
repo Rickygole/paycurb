@@ -125,7 +125,7 @@ export function AuditLog() {
   const exportCsv = () => grid.current?.api.exportDataAsCsv({ fileName: `paycurb-audit-${new Date().toISOString().slice(0, 10)}.csv` });
 
   const progress = useMemo(() => {
-    if (done) return `${count(rows.length)} entries, oldest at the bottom`;
+    if (done) return `${count(rows.length)} entries`;
     if (loading) return `Loading entries, ${count(rows.length)} so far`;
     return `${count(rows.length)} entries loaded, more on the server`;
   }, [done, loading, rows.length]);
@@ -147,7 +147,7 @@ export function AuditLog() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <p role="status" className="muted grow">
+        <p role="status" className="muted grow small">
           {progress}
         </p>
         {!loading && (
