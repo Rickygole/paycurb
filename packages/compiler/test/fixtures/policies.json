@@ -13,7 +13,7 @@
   { "text": "Never issue refunds.", "expected": { "refunds": "block" } },
   { "text": "Only buy from Acme Office and Paper Co.", "expected": { "merchant_allowlist": ["acme-office", "paper-co"] } },
   { "text": "Only buy from Acme Office.", "expected": { "merchant_allowlist": ["acme-office"] } },
-  { "text": "Never buy from Luxury Watches.", "expected": { "merchant_blocklist": ["luxury-watches"] } },
+  { "text": "Never buy from Luxury Watches.", "expected": { "merchant_blocklist": ["luxury-watches.example"] } },
   { "text": "Don't buy more than 3 of any one item.", "expected": { "max_quantity_per_line": 3 } },
   { "text": "Block payouts, and ask me before any refund.", "expected": { "payouts": "block", "refunds": "escalate" } },
   { "text": "Only buy from Acme Office, never more than $30 per purchase, and no more than $90 a day.", "expected": { "merchant_allowlist": ["acme-office"], "per_transaction_limit_cents": 3000, "daily_limit_cents": 9000 } },

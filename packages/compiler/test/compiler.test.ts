@@ -103,7 +103,7 @@ describe("readback", () => {
 
 describe("compilePolicy", () => {
   it("merges the tool call with strict defaults", async () => {
-    const { llm, calls } = fakeLlm([toolReply({ per_transaction_limit_cents: 10000 })]);
+    const { llm, calls } = fakeLlm([toolReply({ per_purchase_limit_dollars: 100 })]);
     const result = await compilePolicy("no purchase over $100", llm, "m");
     expect(result.policy).toEqual({ ...strictPolicy, per_transaction_limit_cents: 10000 });
     expect(result.readback).toContain("Block any single purchase above $100.00.");
@@ -114,11 +114,11 @@ describe("compilePolicy", () => {
   });
 
   it("retries once with the validation error", async () => {
-    const { llm, calls } = fakeLlm([toolReply({ daily_limit_cents: 12.5 }), toolReply({ daily_limit_cents: 1250 })]);
+    const { llm, calls } = fakeLlm([toolReply({ questions: "not a list" }), toolReply({ daily_limit_dollars: 12.5 })]);
     const result = await compilePolicy("daily $12.50", llm, "m");
     expect(result.policy.daily_limit_cents).toBe(1250);
     expect(calls).toHaveLength(2);
-    expect(JSON.stringify(calls[1].messages)).toContain("daily_limit_cents");
+    expect(JSON.stringify(calls[1].messages)).toContain("rejected");
     expect(calls[1].messages).toHaveLength(3);
   });
 
@@ -130,7 +130,7 @@ describe("compilePolicy", () => {
   });
 
   it("throws when the retry also fails", async () => {
-    const { llm, calls } = fakeLlm([toolReply({ bogus: 1 }), toolReply({ bogus: 1 })]);
+    const { llm, calls } = fakeLlm([toolReply({ questions: 5 }), toolReply({ questions: 5 })]);
     await expect(compilePolicy("x", llm, "m")).rejects.toThrow();
     expect(calls).toHaveLength(2);
   });
