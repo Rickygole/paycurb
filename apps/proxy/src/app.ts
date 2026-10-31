@@ -1,3 +1,4 @@
+import { Hono } from "hono";
 import { createApp } from "./api";
 import { assertRestrictedRole, inTransaction } from "./db";
 import { createPayPalGateway } from "./paypal";
@@ -11,6 +12,8 @@ await inTransaction(async (client) => {
 
 const startAttackRun = process.env.VERCEL ? undefined : (await import("../../../attacks/src/start")).startAttackRun;
 
-export const app = createApp({ deps: { gateway: createPayPalGateway(), now: () => new Date() }, startAttackRun });
+const inner = createApp({ deps: { gateway: createPayPalGateway(), now: () => new Date() }, startAttackRun });
+
+export const app = new Hono().route("/", inner);
 
 export default app;
