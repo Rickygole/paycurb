@@ -78,7 +78,7 @@ function Flight({ item, delay, policyRing, paypalRing, onCaption, onDone }: {
               { transform: "translateY(0)", opacity: 1 },
               { transform: "translateY(14px)", opacity: 0 },
             ],
-            { duration: 420, delay: 260, easing: "ease-in", fill: "forwards" },
+            { duration: 420, delay: 260, easing: "cubic-bezier(0.55, 0.055, 0.675, 0.19)", fill: "forwards" },
           )
           .finished.then(() => onDone(item.id), () => onDone(item.id));
         return;
@@ -193,7 +193,7 @@ export function Gate({ items, status, policyVersion }: { items: Feed[] | null; s
             <b>Paycurb policy{policyVersion ? ` v${policyVersion}` : ""}</b>
             <span className="node-sub">
               <span className="num" style={{ opacity: caption ? 0 : 1 }}>
-                {count(tally.block)} stopped · {count(tally.escalate)} held · {count(tally.allow)} passed of the last {count(total)}
+                {items ? `${count(tally.block)} stopped · ${count(tally.escalate)} held · ${count(tally.allow)} passed of the last ${count(total)}` : "Reading the latest calls"}
               </span>
               <span className="gate-caption" data-tone={caption?.tone} style={{ opacity: caption ? 1 : 0 }} aria-live="polite">
                 {caption?.text ?? ""}
