@@ -28,6 +28,24 @@ const attackNames = [
 
 const repo = "https://github.com/Rickygole/paycurb";
 
+const chainRows = [
+  { seq: 6, time: "03:44:54", what: "Chronos X watch", merchant: "Luxury Watches", amount: "$400.00", decision: "block", rule: "R04", entry: "64a66321", prev: "f18d50ea" },
+  { seq: 7, time: "03:44:54", what: "Desk lamp", merchant: "Acme Office Supply", amount: "$75.00", decision: "escalate", rule: "R14", entry: "b2906346", prev: "64a66321" },
+  { seq: 8, time: "03:44:54", what: "Desk lamp, resent", merchant: "Acme Office Supply", amount: "$450.00", decision: "block", rule: "R06", entry: "93972432", prev: "b2906346" },
+  { seq: 9, time: "03:44:54", what: "Owner approval", merchant: "Acme Office Supply", amount: "$75.00", decision: "allow", rule: "R14", entry: "b51d17c0", prev: "93972432" },
+  { seq: 10, time: "03:44:54", what: "Desk lamp", merchant: "Acme Office Supply", amount: "$75.00", decision: "allow", rule: "R99", entry: "9c8e2e35", prev: "b51d17c0" },
+  { seq: 11, time: "03:44:58", what: "Desk lamp paid", merchant: "Acme Office Supply", amount: "$75.00", decision: "allow", rule: "R99", entry: "7aabbf79", prev: "9c8e2e35" },
+  { seq: 12, time: "03:44:58", what: "transfer_funds", merchant: "Unknown tool", amount: "-", decision: "block", rule: "R00", entry: "868af507", prev: "7aabbf79" },
+] as const;
+
+const stopped = [
+  { what: "Chronos X watch", reason: "luxury-watches.example is not an approved merchant", amount: "$400.00" },
+  { what: "Desk lamp, resent bigger", reason: "$450.00 exceeds the $100.00 per-transaction limit", amount: "$450.00" },
+  { what: "transfer_funds", reason: "transfer_funds is not a tool your policy allows", amount: "-" },
+];
+
+const decisionWords = { allow: "Allowed", escalate: "Held", block: "Blocked" } as const;
+
 function Ticket({ children }: { children: React.ReactNode }) {
   return (
     <div className="ticket" data-ui>
@@ -76,7 +94,29 @@ export function Landing() {
                 {dollars(head.money_lost_baseline_cents)}.
               </p>
             </Reveal>
-            <p className="source">Scripted suite, PayPal sandbox, {new Date(report.generated_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
+            <Reveal className="stats-side" delay={240}>
+              <ul className="feed" data-ui aria-label="Calls stopped before PayPal, from a real test run">
+                {stopped.map((row) => (
+                  <li key={row.what} className="feed-row">
+                    <span className="pill pill-block">Blocked</span>
+                    <div className="feed-text">
+                      <p className="what">{row.what}</p>
+                      <p className="merchant">{row.reason}</p>
+                    </div>
+                    <span className="route" aria-hidden="true">
+                      <i />
+                      <b />
+                      <i />
+                      <b className="cut" />
+                      <i className="ring" />
+                      <em className="packet" />
+                    </span>
+                    <span className="amt">{row.amount}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="source">Rows from a real run. The route shows where each call stopped: before PayPal.</p>
+            </Reveal>
           </section>
         )}
 
@@ -130,6 +170,58 @@ export function Landing() {
         </section>
 
         <Picker />
+
+        <section className="field chain" data-chapter data-ink="dark" aria-labelledby="chain-title">
+          <Reveal className="chain-copy">
+            <h2 id="chain-title">Every decision is chained.</h2>
+            <p>
+              Each entry carries the fingerprint of the one before it, so changing any past row breaks every row after it. These are real rows from a test run against the PayPal sandbox.
+            </p>
+          </Reveal>
+          <Reveal className="chain-table" delay={120}>
+            <div className="ledger" data-ui>
+              <p className="ledger-badge">Chain verified, 12 entries</p>
+              <table>
+                <caption className="visually-hidden">Audit log entries, each with the fingerprint of the previous entry</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">What</th>
+                    <th scope="col" className="num hide-phone">
+                      Amount
+                    </th>
+                    <th scope="col">Decision</th>
+                    <th scope="col" className="hide-small">
+                      Rule
+                    </th>
+                    <th scope="col">Entry</th>
+                    <th scope="col" className="hide-small">
+                      Follows
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chainRows.map((row, position) => (
+                    <tr key={row.seq} style={{ "--i": position } as React.CSSProperties}>
+                      <td className="num">{row.seq}</td>
+                      <td>
+                        <span className="what">{row.what}</span>
+                        <span className="merchant">{row.merchant}</span>
+                      </td>
+                      <td className="num hide-phone">{row.amount}</td>
+                      <td>
+                        <span className={`pill pill-${row.decision}`}>{decisionWords[row.decision]}</span>
+                      </td>
+                      <td className="hide-small">{row.rule}</td>
+                      <td className="hash">{row.entry}</td>
+                      <td className="hash hide-small">{row.prev}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Reveal>
+        </section>
 
         <section className="band-wrap" data-chapter data-ink="light" aria-labelledby="band-title">
           <h2 id="band-title" className="visually-hidden">
