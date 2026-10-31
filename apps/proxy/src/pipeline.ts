@@ -5,7 +5,7 @@ import { appendAudit } from "./audit";
 import { getPool, inTransaction } from "./db";
 import { publish } from "./events";
 import { blankAction, getOrderArgs, prepareOrder, prepareRefund, type Prepared } from "./normalize";
-import type { PayPalGateway } from "./paypal";
+import { PayPalError, type PayPalGateway } from "./paypal";
 import { getActivePolicy } from "./policy";
 import { createApproval, recordDecision } from "./records";
 import { loadState } from "./state";
@@ -161,9 +161,21 @@ async function stage(deps: Deps, prepared: Prepared, agentId: string): Promise<S
   });
 }
 
-async function settle(action: Action, key: string, policyVersion: number, outcome: { status: string; ref: string | null; summary: unknown; result: CallResult; failed: boolean }) {
+type Mode = "completed" | "released" | "held";
+
+interface Settlement {
+  status: string;
+  ref: string | null;
+  summary: unknown;
+  result: CallResult;
+  mode: Mode;
+}
+
+async function settle(action: Action, key: string, policyVersion: number, outcome: Settlement) {
   await inTransaction(async (client) => {
-    await client.query("UPDATE reservations SET status = $2 WHERE action_id = $1", [action.action_id, outcome.failed ? "released" : "completed"]);
+    if (outcome.mode !== "held") {
+      await client.query("UPDATE reservations SET status = $2 WHERE action_id = $1", [action.action_id, outcome.mode]);
+    }
     await client.query("INSERT INTO executions (action_id, paypal_ref, status, response_json_redacted) VALUES ($1,$2,$3,$4)", [action.action_id, outcome.ref, outcome.status, JSON.stringify(redact(outcome.summary))]);
     await appendAudit(client, {
       action_id: action.action_id,
@@ -176,41 +188,75 @@ async function settle(action: Action, key: string, policyVersion: number, outcom
       reason: outcome.result.reason,
       policy_version: policyVersion,
       payload_hash: action.payload_hash,
-      paypal_ref: outcome.failed ? null : outcome.ref,
+      paypal_ref: outcome.mode === "completed" ? outcome.ref : null,
     });
-    if (outcome.failed) await client.query("DELETE FROM idempotency WHERE key = $1", [key]);
-    else await client.query("UPDATE idempotency SET result_json = $2 WHERE key = $1", [key, JSON.stringify(outcome.result)]);
+    if (outcome.mode === "released") await client.query("DELETE FROM idempotency WHERE key = $1", [key]);
+    if (outcome.mode === "completed") await client.query("UPDATE idempotency SET result_json = $2 WHERE key = $1", [key, JSON.stringify(outcome.result)]);
   });
+}
+
+interface GatewayOutcome {
+  status: string;
+  ref: string | null;
+  summary: unknown;
+  success: CallResult;
+}
+
+async function callGateway(deps: Deps, action: Action, prepared: Prepared): Promise<GatewayOutcome> {
+  if (prepared.order) {
+    const order = await deps.gateway.createOrder({
+      amountCents: action.amount_cents,
+      currency: action.currency,
+      items: prepared.order.items.map((item, index) => ({ sku: item.sku, name: item.name, quantity: item.quantity, unitCents: action.line_items[index].unit_cents })),
+      requestId: action.action_id,
+    });
+    const view = { id: order.id, status: order.status, capture_id: order.captureId };
+    return { status: order.status, ref: order.captureId ?? order.id, summary: view, success: { decision: "allow", rule_id: "R99", reason: `Executed at PayPal: ${order.status}`, order: view } };
+  }
+  const refund = prepared.refund!;
+  const response = await deps.gateway.refund({ captureId: refund.capture_id, amountCents: action.amount_cents, currency: action.currency, note: refund.note_to_payer, requestId: action.action_id });
+  return {
+    status: response.status,
+    ref: response.id,
+    summary: { ...response, capture_id: refund.capture_id },
+    success: { decision: "allow", rule_id: "R99", reason: `Executed at PayPal: ${response.status}`, refund: response },
+  };
+}
+
+const failure = (reason: string): CallResult => ({ decision: "block", rule_id: "R00", reason });
+
+const rejectedBeforeCharging = (error: unknown) => error instanceof PayPalError && error.httpStatus >= 400 && error.httpStatus < 500 && error.httpStatus !== 408;
+
+async function settleQuietly(action: Action, key: string, policyVersion: number, outcome: Settlement) {
+  try {
+    await settle(action, key, policyVersion, outcome);
+  } catch {
+    return;
+  }
 }
 
 async function execute(deps: Deps, staged: Extract<Staged, { kind: "execute" }>): Promise<CallResult> {
   const { action, prepared, key, policyVersion } = staged;
-  const failure = (reason: string): CallResult => ({ decision: "block", rule_id: "R00", reason });
+  let outcome: GatewayOutcome;
   try {
-    if (prepared.order) {
-      const order = await deps.gateway.createOrder({
-        amountCents: action.amount_cents,
-        currency: action.currency,
-        items: prepared.order.items.map((item, index) => ({ sku: item.sku, name: item.name, quantity: item.quantity, unitCents: action.line_items[index].unit_cents })),
-        requestId: action.action_id,
-      });
-      const failed = FAILED_STATUSES.includes(order.status);
-      const view = { id: order.id, status: order.status, capture_id: order.captureId };
-      const result: CallResult = failed ? failure(`Blocked: PayPal returned ${order.status}, reservation released`) : { decision: "allow", rule_id: "R99", reason: `Executed at PayPal: ${order.status}`, order: view };
-      await settle(action, key, policyVersion, { status: order.status, ref: order.captureId ?? order.id, summary: view, result, failed });
+    outcome = await callGateway(deps, action, prepared);
+  } catch (error) {
+    if (rejectedBeforeCharging(error)) {
+      const result = failure("Blocked: PayPal rejected the request and the reservation was released");
+      await settleQuietly(action, key, policyVersion, { status: "rejected", ref: null, summary: { error: "paypal rejected the request" }, result, mode: "released" });
       return result;
     }
-    const refund = prepared.refund!;
-    const response = await deps.gateway.refund({ captureId: refund.capture_id, amountCents: action.amount_cents, currency: action.currency, note: refund.note_to_payer, requestId: action.action_id });
-    const failed = FAILED_STATUSES.includes(response.status);
-    const result: CallResult = failed ? failure(`Blocked: PayPal returned ${response.status}`) : { decision: "allow", rule_id: "R99", reason: `Executed at PayPal: ${response.status}`, refund: response };
-    await settle(action, key, policyVersion, { status: response.status, ref: response.id, summary: { ...response, capture_id: refund.capture_id }, result, failed });
-    return result;
-  } catch {
-    const result = failure("Blocked: the PayPal call failed and the reservation was released");
-    await settle(action, key, policyVersion, { status: "failed", ref: null, summary: { error: "paypal call failed" }, result, failed: true });
+    const result = failure("Blocked: the PayPal outcome is unknown, so the amount stays reserved until it is checked");
+    await settleQuietly(action, key, policyVersion, { status: "unknown", ref: null, summary: { error: "paypal outcome unknown" }, result, mode: "held" });
     return result;
   }
+  if (FAILED_STATUSES.includes(outcome.status)) {
+    const result = failure(`Blocked: PayPal returned ${outcome.status}, reservation released`);
+    await settleQuietly(action, key, policyVersion, { status: outcome.status, ref: outcome.ref, summary: outcome.summary, result, mode: "released" });
+    return result;
+  }
+  await settleQuietly(action, key, policyVersion, { status: outcome.status, ref: outcome.ref, summary: outcome.summary, result: outcome.success, mode: "completed" });
+  return outcome.success;
 }
 
 export async function handleCall(deps: Deps, call: Call): Promise<CallResult> {
