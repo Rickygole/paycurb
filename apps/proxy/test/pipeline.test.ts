@@ -186,6 +186,14 @@ describe("idempotency and failures", () => {
     expect(results.filter((r) => r.decision === "allow")).not.toHaveLength(0);
   });
 
+  it("uses a fresh PayPal request id for a later identical purchase", async () => {
+    await buy(order(12, acme, "PEN-12"));
+    minutes(11);
+    await buy(order(12, acme, "PEN-12"));
+    expect(gateway.orders).toHaveLength(2);
+    expect(gateway.orders[0].requestId).not.toBe(gateway.orders[1].requestId);
+  });
+
   it("returns the first result for a sequential repeat", async () => {
     const first = await buy(order(12, acme, "PEN-12"));
     const second = await buy(order(12, acme, "PEN-12"));

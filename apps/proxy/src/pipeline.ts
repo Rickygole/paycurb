@@ -191,7 +191,7 @@ async function execute(deps: Deps, staged: Extract<Staged, { kind: "execute" }>)
         amountCents: action.amount_cents,
         currency: action.currency,
         items: prepared.order.items.map((item, index) => ({ sku: item.sku, name: item.name, quantity: item.quantity, unitCents: action.line_items[index].unit_cents })),
-        requestId: key,
+        requestId: action.action_id,
       });
       const failed = FAILED_STATUSES.includes(order.status);
       const view = { id: order.id, status: order.status, capture_id: order.captureId };
@@ -200,7 +200,7 @@ async function execute(deps: Deps, staged: Extract<Staged, { kind: "execute" }>)
       return result;
     }
     const refund = prepared.refund!;
-    const response = await deps.gateway.refund({ captureId: refund.capture_id, amountCents: action.amount_cents, currency: action.currency, note: refund.note_to_payer, requestId: key });
+    const response = await deps.gateway.refund({ captureId: refund.capture_id, amountCents: action.amount_cents, currency: action.currency, note: refund.note_to_payer, requestId: action.action_id });
     const failed = FAILED_STATUSES.includes(response.status);
     const result: CallResult = failed ? failure(`Blocked: PayPal returned ${response.status}`) : { decision: "allow", rule_id: "R99", reason: `Executed at PayPal: ${response.status}`, refund: response };
     await settle(action, key, policyVersion, { status: response.status, ref: response.id, summary: { ...response, capture_id: refund.capture_id }, result, failed });
