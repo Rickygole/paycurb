@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f5f6f8, #0c0f14);
+  --surface: light-dark(#ffffff, #141920);
+  --surface-2: light-dark(#f0f2f5, #1b212a);
+  --surface-3: light-dark(#e6e9ee, #252c37);
+  --border: light-dark(#dfe3e9, #2a313c);
+  --border-strong: light-dark(#c5ccd6, #3a4350);
+  --text: light-dark(#12161c, #e7eaef);
+  --text-muted: light-dark(#566070, #9ba5b4);
+  --accent: light-dark(#3f3cc9, #8f8cff);
+  --accent-hover: light-dark(#322fa8, #a7a5ff);
+  --accent-contrast: light-dark(#ffffff, #0c0f14);
+  --accent-soft: light-dark(#ecebfd, #22214a);
+  --focus: light-dark(#3f3cc9, #a7a5ff);
+  --allow: light-dark(#14713a, #4ade80);
+  --allow-soft: light-dark(#e3f6ea, #12301f);
+  --escalate: light-dark(#8a4b06, #fbbf24);
+  --escalate-soft: light-dark(#fdf1d8, #35280c);
+  --block: light-dark(#b42318, #f87171);
+  --block-soft: light-dark(#fde6e4, #3a1515);
+  --shadow-color: light-dark(rgb(16 24 40 / 0.08), rgb(0 0 0 / 0.45));
+  --shadow-color-lg: light-dark(rgb(16 24 40 / 0.16), rgb(0 0 0 / 0.6));
+  --shadow: 0 1px 2px var(--shadow-color);
+  --shadow-lg: 0 12px 32px var(--shadow-color-lg);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-soft: var(--accent-soft);
+  --color-allow: var(--allow);
+  --color-allow-soft: var(--allow-soft);
+  --color-escalate: var(--escalate);
+  --color-escalate-soft: var(--escalate-soft);
+  --color-block: var(--block);
+  --color-block-soft: var(--block-soft);
+  --shadow-card: var(--shadow);
+  --shadow-pop: var(--shadow-lg);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-soft {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.animate-enter {
+  animation: enter 220ms ease-out both;
+}
+
+.animate-skeleton {
+  animation: pulse-soft 1.4s ease-in-out infinite;
+}
+
+dialog.drawer {
+  margin: 0 0 0 auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: min(560px, 100vw);
+  max-width: 100vw;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0;
+  box-shadow: var(--shadow-lg);
+}
+
+dialog.drawer[open] {
+  animation: slide-in 220ms ease-out;
+}
+
+dialog.drawer::backdrop {
+  background: rgb(8 10 14 / 0.45);
+  animation: fade-in 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  dialog.drawer::backdrop {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
