@@ -158,19 +158,8 @@ export function Shell({ children }: { children: ReactNode }) {
       </div>
 
       <main id="main" className="col page">
-        {checked ? children : <SessionCheck />}
+        {children}
       </main>
-    </div>
-  );
-}
-
-function SessionCheck() {
-  return (
-    <div role="status" style={{ display: "grid", gap: 16 }}>
-      <span className="sr-only">Checking your session</span>
-      <span className="sk" style={{ height: 34, width: 220 }} />
-      <span className="sk" style={{ height: 132 }} />
-      <span className="sk" style={{ height: 320 }} />
     </div>
   );
 }
