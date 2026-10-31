@@ -1,4 +1,4 @@
-# AgentLock
+# Paycurb
 
 A payment firewall between an AI shopping agent and PayPal. The agent holds no PayPal credentials. Every payment call goes through a deterministic policy engine that returns allow, escalate or block, so a hijacked agent can only spend inside the limits its owner set.
 

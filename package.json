@@ -1,1 +1,1 @@
-{ "name": "agentlock", "private": true, "scripts": { "test": "pnpm -r test" } }
+{ "name": "paycurb", "private": true, "scripts": { "test": "pnpm -r test" } }

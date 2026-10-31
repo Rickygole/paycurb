@@ -1,6 +1,6 @@
 # PayPal spike (Day 1)
 
-Status: docs research and a live sandbox run done 2026-10-30, using a dedicated sandbox REST app named AgentLock.
+Status: docs research and a live sandbox run done 2026-10-30, using a dedicated sandbox REST app named Paycurb.
 
 ## Confirmed from the official repo README (github.com/paypal/agent-toolkit)
 
