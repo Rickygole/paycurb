@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@paycurb/engine"],
   compress: false,
   agentRules: false,
+  devIndicators: false,
   async rewrites() {
     return [
       { source: "/api/:path*", destination: `${proxyUrl}/api/:path*` },
