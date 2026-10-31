@@ -181,8 +181,36 @@ export const WrenchIcon = (props: IconProps) => (
   </Icon>
 );
 
-export const ArrowDownIcon = (props: IconProps) => (
+export const MenuIcon = (props: IconProps) => (
   <Icon {...props}>
-    <path d="M12 5v14M19 12l-7 7-7-7" />
+    <path d="M4 7h16M4 12h16M4 17h16" />
   </Icon>
 );
+
+export const ChevronDownIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m6 9 6 6 6-6" />
+  </Icon>
+);
+
+export const ChevronRightIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m9 6 6 6-6 6" />
+  </Icon>
+);
+
+export const PencilIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
+  </Icon>
+);
+
+export function GateMark({ size = 20, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false" className={className}>
+      <path d="M11 2.5v4.5M11 13v4.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M2.5 10h5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="16" cy="10" r="1.75" fill="currentColor" />
+    </svg>
+  );
+}
