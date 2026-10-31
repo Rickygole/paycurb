@@ -94,12 +94,12 @@ export function PolicyEditor() {
           Rules in plain English
         </label>
         {active.loading ? (
-          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-32 w-full" />
         ) : (
           <textarea
             id="rules"
-            rows={8}
-            className="input min-h-48 resize-y leading-relaxed"
+            rows={5}
+            className="input min-h-32 resize-y leading-relaxed"
             placeholder={example}
             value={text}
             onChange={(event) => setDraft(event.target.value)}
