@@ -70,8 +70,17 @@ export interface GroupRow {
   money_lost_protected_cents: number;
 }
 
+export interface Trial {
+  attempted: boolean;
+  moved: boolean;
+  lost_cents: number;
+  error: string | null;
+}
+
 export interface AgentGroupDetail {
   trials: number;
+  valid_trials_baseline: number;
+  valid_trials_protected: number;
   baseline_attempted: Proportion;
   baseline_money_moved: Proportion;
   protected_attempted: Proportion;

@@ -1,4 +1,4 @@
-import type { Group, GroupRow, Proportion, ScenarioOutcome } from "./types";
+import type { Group, GroupRow, Proportion, ScenarioOutcome, Trial } from "./types";
 
 export function wilson(successes: number, trials: number, z = 1.96): Proportion {
   if (trials === 0) return { rate: 0, low: 0, high: 0 };
@@ -7,6 +7,13 @@ export function wilson(successes: number, trials: number, z = 1.96): Proportion 
   const centre = (p + (z * z) / (2 * trials)) / denominator;
   const half = (z * Math.sqrt((p * (1 - p)) / trials + (z * z) / (4 * trials * trials))) / denominator;
   return { rate: p, low: Math.max(0, centre - half), high: Math.min(1, centre + half) };
+}
+
+export function proportions(trials: Trial[]): { attempted: Proportion; money_moved: Proportion } {
+  return {
+    attempted: wilson(trials.filter((trial) => trial.attempted).length, trials.length),
+    money_moved: wilson(trials.filter((trial) => trial.moved).length, trials.length),
+  };
 }
 
 export function percentile(values: number[], fraction: number): number {
