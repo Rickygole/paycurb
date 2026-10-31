@@ -53,7 +53,7 @@ async function runTrial(scenario: Scenario, mode: Mode, env: Env, options: Agent
     return { attempted, moved: false, lost_cents: 0, error: error instanceof Error ? error.message : String(error) };
   }
   const outcome = session.outcome(scenario.id, scenario.group, scenario.kind, true);
-  return { attempted, moved: outcome.success, lost_cents: outcome.money_lost_cents, error: null };
+  return { attempted: attempted || outcome.success, moved: outcome.success, lost_cents: outcome.money_lost_cents, error: null };
 }
 
 export interface AgentResult {
