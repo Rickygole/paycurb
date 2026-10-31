@@ -1,0 +1,69 @@
+databases:
+  - name: paycurb-db
+    plan: free
+    databaseName: paycurb
+
+services:
+  - type: web
+    name: paycurb-proxy
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    preDeployCommand: pnpm --filter @paycurb/proxy migrate
+    startCommand: pnpm --filter @paycurb/proxy start
+    healthCheckPath: /healthz
+    envVars:
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: DEMO_MODE
+        value: "true"
+      - key: OWNER_DATABASE_URL
+        fromDatabase:
+          name: paycurb-db
+          property: connectionString
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_DB_PASSWORD
+        generateValue: true
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL_COMPILER
+        sync: false
+
+  - type: web
+    name: paycurb-agent
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    startCommand: pnpm --filter @paycurb/agent start
+    healthCheckPath: /healthz
+    envVars:
+      - key: PROXY_URL
+        fromService:
+          type: web
+          name: paycurb-proxy
+          property: hostport
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL_AGENT
+        sync: false
+
+  - type: web
+    name: paycurb-web
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @paycurb/web build
+    startCommand: pnpm --filter @paycurb/web start
+    envVars:
+      - key: PROXY_URL
+        sync: false
+      - key: AGENT_URL
+        sync: false
