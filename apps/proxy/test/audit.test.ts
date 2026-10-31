@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { appendAudit, verifyChain, type AuditInput } from "../src/audit";
-import { closePool, getPool, inTransaction } from "../src/db";
+import { assertRestrictedRole, closePool, getPool, inTransaction } from "../src/db";
 import { asOwner, resetDatabase } from "./helpers";
 
 const entry = (overrides: Partial<AuditInput> = {}): AuditInput => ({
@@ -49,5 +49,11 @@ describe("audit chain", () => {
   it("redacts card numbers in reasons", async () => {
     const row = await inTransaction((client) => appendAudit(client, entry({ reason: "card 4111111111111111 seen" })));
     expect(row.reason).toBe("card [redacted] seen");
+  });
+});
+
+describe("role guard", () => {
+  it("accepts the restricted application role", async () => {
+    await expect(assertRestrictedRole()).resolves.toBeUndefined();
   });
 });

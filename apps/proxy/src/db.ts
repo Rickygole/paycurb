@@ -27,3 +27,8 @@ export async function inTransaction<T>(work: (client: pg.PoolClient) => Promise<
     client.release();
   }
 }
+
+export async function assertRestrictedRole() {
+  const result = await getPool().query("SELECT has_table_privilege(current_user, 'audit_log', 'UPDATE') OR has_table_privilege(current_user, 'audit_log', 'DELETE') AS unsafe");
+  if (result.rows[0].unsafe) throw new Error("database role can modify the audit log, use the restricted application role");
+}
