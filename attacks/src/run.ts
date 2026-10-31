@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createLlm, requiredEnv } from "@paycurb/llm";
 import { closePool, inTransaction } from "../../apps/proxy/src/db";
+import { activatePolicy, getActivePolicy, type ActivePolicy } from "../../apps/proxy/src/policy";
 import { createPayPalGateway } from "../../apps/proxy/src/paypal";
 import { seedRegistry } from "../../apps/proxy/src/seed";
 import { agentScenarios, limitationScenarios, scriptedScenarios } from "../scenarios";
@@ -19,7 +20,7 @@ const hasFlag = (name: string) => process.argv.includes(`--${name}`);
 const log = (line: string) => console.log(line);
 const reportPath = () => process.env.REPORT_PATH ?? new URL("../../reports/attack-report.json", import.meta.url).pathname;
 
-async function main() {
+async function runSuite() {
   const trials = Number(readOption("trials") ?? process.env.TRIALS ?? 10);
   const withAgent = hasFlag("agent") || process.env.ATTACKS_AGENT === "true";
   const fake = hasFlag("fake-gateway");
@@ -68,6 +69,21 @@ async function main() {
   writeReport(report, reportPath());
   log(JSON.stringify({ headline: report.headline, false_block_rate: report.false_block_rate, escalated_as_designed_rate: report.escalated_as_designed_rate, latency_ms: report.latency_ms, findings: report.findings }, null, 2));
   log(`Report written to ${reportPath()}`);
+}
+
+async function restorePolicy(saved: ActivePolicy | null) {
+  if (!saved) return;
+  await inTransaction((client) => activatePolicy(client, saved.policy, saved.source_text));
+  log(`Restored the owner policy that was active before the run (was version ${saved.version})`);
+}
+
+async function main() {
+  const saved = await inTransaction((client) => getActivePolicy(client));
+  try {
+    await runSuite();
+  } finally {
+    await restorePolicy(saved);
+  }
 }
 
 main()
