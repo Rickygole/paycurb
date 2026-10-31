@@ -36,7 +36,7 @@ const centsOrNaN = (value: number): number => {
   }
 };
 
-const blankAction = (tool: string, agentId: string, args: unknown): Action => ({
+export const blankAction = (tool: string, agentId: string, args: unknown): Action => ({
   action_id: randomUUID(),
   tool,
   kind: tool,
