@@ -8,6 +8,7 @@ import { AlertIcon, PlayIcon, TargetIcon } from "../icons";
 import { Page, PageHeader } from "../Shell";
 import { EmptyState, ErrorState, LoadingBlock } from "../states";
 import { GroupBars } from "./GroupBars";
+import { attackGroups, groupNames, rateOf } from "./groups";
 
 type Latest = AttackReport | { report: null };
 
@@ -22,12 +23,6 @@ function Headline({ label, value, hint, tone }: { label: string; value: string; 
       <p className="mt-1 text-xs text-muted">{hint}</p>
     </div>
   );
-}
-
-function weightedRate(report: AttackReport, pick: "baseline_success" | "protected_success") {
-  const total = report.groups.reduce((sum, group) => sum + group.scenarios, 0);
-  if (total === 0) return 0;
-  return report.groups.reduce((sum, group) => sum + group[pick] * group.scenarios, 0) / total;
 }
 
 export function AttackResults() {
@@ -89,21 +84,30 @@ export function AttackResults() {
 }
 
 function Report({ report }: { report: AttackReport }) {
-  const baseline = weightedRate(report, "baseline_success");
-  const protectedRate = weightedRate(report, "protected_success");
-  const lostBaseline = report.groups.reduce((sum, group) => sum + group.money_lost_baseline_cents, 0);
-  const lostProtected = report.groups.reduce((sum, group) => sum + group.money_lost_protected_cents, 0);
-  const scenarios = report.groups.reduce((sum, group) => sum + group.scenarios, 0);
+  const { headline } = report;
+  const baselineRate = rateOf(headline.baseline_success, headline.attack_scenarios) ?? 0;
+  const protectedRate = rateOf(headline.protected_success, headline.attack_scenarios) ?? 0;
+  const pendingAgent = report.agent?.status === "pending" || !headline.includes_group_a;
 
   return (
     <div className="space-y-6">
       <p className="text-xs text-muted">
-        Generated {formatDateTime(report.generated_at)}. Agent model: <span className="font-mono">{report.model}</span>. {count(scenarios)} scenarios,{" "}
-        {report.trials_per_agent_scenario} trials each.
+        Generated {formatDateTime(report.generated_at)}. Agent model: <span className="font-mono">{report.model ?? "not run"}</span>. {count(headline.attack_scenarios)} attack scenarios measured
+        {pendingAgent ? ", live agent group pending" : `, ${report.trials_per_agent_scenario} trials per agent scenario`}.
       </p>
+      {pendingAgent && report.agent?.note && (
+        <p role="status" className="rounded-lg bg-escalate-soft px-4 py-3 text-sm text-escalate">
+          {report.agent.note}
+        </p>
+      )}
       <section aria-label="Headline numbers" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Headline label="Attack success with Paycurb" value={percent(protectedRate)} hint={`Down from ${percent(baseline)} without it`} tone={protectedRate === 0 ? "allow" : "block"} />
-        <Headline label="Money lost with Paycurb" value={dollars(lostProtected)} hint={`${dollars(lostBaseline)} lost without it`} />
+        <Headline
+          label="Attack success with Paycurb"
+          value={percent(protectedRate)}
+          hint={`${headline.protected_success} of ${headline.attack_scenarios} scenarios. ${percent(baselineRate)} without it (${headline.baseline_success} of ${headline.attack_scenarios})`}
+          tone={headline.protected_success === 0 ? "allow" : "block"}
+        />
+        <Headline label="Money lost with Paycurb" value={dollars(headline.money_lost_protected_cents)} hint={`${dollars(headline.money_lost_baseline_cents)} moved beyond policy without it`} />
         <Headline label="False block rate" value={percent(report.false_block_rate)} hint={`Legitimate purchases stopped. ${percent(report.escalated_as_designed_rate)} escalated as designed`} />
         <Headline
           label="Engine latency, median"
@@ -128,16 +132,24 @@ function Report({ report }: { report: AttackReport }) {
             </tr>
           </thead>
           <tbody>
-            {report.groups.map((group) => (
-              <tr key={group.group} className="border-b border-line last:border-b-0">
-                <th scope="row" className="px-5 py-2.5 text-left font-medium">{group.group}</th>
-                <td className="px-4 py-2.5 text-right num">{group.scenarios}</td>
-                <td className="px-4 py-2.5 text-right num">{percent(group.baseline_success)}</td>
-                <td className={`px-4 py-2.5 text-right font-semibold num ${group.protected_success > 0 ? "text-block" : "text-allow"}`}>{percent(group.protected_success)}</td>
-                <td className="px-4 py-2.5 text-right num">{dollars(group.money_lost_baseline_cents)}</td>
-                <td className="px-5 py-2.5 text-right font-semibold num">{dollars(group.money_lost_protected_cents)}</td>
-              </tr>
-            ))}
+            {attackGroups(report.groups).map((group) => {
+              const pending = group.status === "pending";
+              const protectedHits = group.protected_success ?? 0;
+              return (
+                <tr key={group.group} className="border-b border-line last:border-b-0">
+                  <th scope="row" className="px-5 py-2.5 text-left font-medium">
+                    {group.group}. {groupNames[group.group] ?? "Other"}
+                  </th>
+                  <td className="px-4 py-2.5 text-right num">{group.scenarios}</td>
+                  <td className="px-4 py-2.5 text-right num">{pending ? "Pending" : `${group.baseline_success} of ${group.scenarios}`}</td>
+                  <td className={`px-4 py-2.5 text-right font-semibold num ${pending ? "" : protectedHits > 0 ? "text-block" : "text-allow"}`}>
+                    {pending ? "Pending" : `${group.protected_success} of ${group.scenarios}`}
+                  </td>
+                  <td className="px-4 py-2.5 text-right num">{pending ? "Pending" : dollars(group.money_lost_baseline_cents ?? 0)}</td>
+                  <td className="px-5 py-2.5 text-right font-semibold num">{pending ? "Pending" : dollars(group.money_lost_protected_cents ?? 0)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>
