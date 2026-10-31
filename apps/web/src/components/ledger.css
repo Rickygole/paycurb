@@ -1875,6 +1875,188 @@ a.figure:hover .figure-cap {
   }
 }
 
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-grid;
+  grid-template-columns: 6px auto;
+  align-items: center;
+  column-gap: 10px;
+  padding: 8px 14px 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--t-hover) ease, background-color var(--t-hover) ease, transform var(--t-press) var(--ease-out);
+}
+
+.chip:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+.chip:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.chip:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+}
+
+.chip .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.chip .hint {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.board {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: max(520px, calc(100dvh - 250px));
+  overflow: hidden;
+}
+
+.lanes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.lanes-head {
+  border-bottom: 1px solid var(--rule);
+}
+
+.lanes-head > span {
+  padding: 14px 20px;
+  font-weight: 800;
+}
+
+.lanes-head > span + span,
+.lane-col {
+  border-left: 1px solid var(--rule);
+}
+
+.transcript {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-content: start;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.transcript > li {
+  padding: 10px 20px;
+  min-width: 0;
+}
+
+.transcript > .in-agent {
+  grid-column: 1;
+  box-shadow: inset -1px 0 var(--rule);
+}
+
+.transcript > .in-gate {
+  grid-column: 2;
+  box-shadow: inset 1px 0 var(--rule);
+}
+
+.transcript > .in-both {
+  grid-column: 1 / -1;
+}
+
+.bubble {
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.bubble.ask {
+  justify-self: start;
+  max-width: 70%;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-ink);
+}
+
+.bubble.call {
+  background: var(--raised);
+}
+
+.bubble-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.run-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.run-end::before,
+.run-end::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.composer {
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+.composer form {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .transcript,
+  .lanes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .transcript > .in-gate,
+  .transcript > .in-agent {
+    grid-column: 1;
+    box-shadow: none;
+  }
+  .transcript > .in-gate {
+    padding-left: 36px;
+  }
+  .lanes-head > span + span {
+    display: none;
+  }
+  .board {
+    height: auto;
+    min-height: 560px;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .burst {
     animation: burst 420ms var(--ease-out) both;
