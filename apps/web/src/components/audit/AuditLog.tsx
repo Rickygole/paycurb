@@ -4,7 +4,7 @@ import { AllCommunityModule, ModuleRegistry, type ColDef, type RowClickedEvent }
 import { AgGridReact } from "ag-grid-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorText } from "@/lib/api";
-import { clock, count, dollars, formatDateTime, fullReason, hasAmount, merchantName } from "@/lib/format";
+import { count, dollars, formatDateTime, fullReason, hasAmount, merchantName, stamp } from "@/lib/format";
 import type { AuditPage, AuditRow } from "@/lib/types";
 import { DecisionBadge, outcomeLabel } from "../DecisionBadge";
 import { Drawer, Field, useLast } from "../Drawer";
@@ -27,8 +27,8 @@ const columns: ColDef<AuditRow>[] = [
   {
     field: "ts",
     headerName: "Time",
-    width: 96,
-    valueFormatter: (p) => (p.value ? clock(p.value) : ""),
+    width: 156,
+    valueFormatter: (p) => (p.value ? stamp(p.value) : ""),
     tooltipValueGetter: (p) => (p.value ? formatDateTime(p.value) : ""),
     cellClass: "num",
   },
@@ -52,17 +52,18 @@ const columns: ColDef<AuditRow>[] = [
     cellRendererSelector: (p) => (p.value == null ? { component: MissingCell } : undefined),
     cellClass: ["num", "ag-right-aligned-cell"],
   },
-  { field: "rule_id", headerName: "Rule", width: 68 },
-  { colId: "reason", headerName: "Reason", flex: 1, minWidth: 180, valueGetter: (p) => (p.data ? fullReason(p.data) : ""), tooltipValueGetter: (p) => p.value },
+  { field: "rule_id", headerName: "Rule", width: 72, cellClass: "mono" },
+  { colId: "reason", headerName: "Reason", flex: 1, minWidth: 340, wrapText: true, autoHeight: true, valueGetter: (p) => (p.data ? fullReason(p.data) : "") },
   {
     field: "paypal_ref",
     headerName: "PayPal reference",
+    hide: true,
     width: 160,
     cellClass: "mono",
     valueFormatter: (p) => p.value ?? "",
     cellRendererSelector: (p) => (p.value ? undefined : { component: MissingCell }),
   },
-  { field: "entry_hash", headerName: "Entry hash", width: 176, cellRenderer: HashCell, sortable: false },
+  { field: "entry_hash", headerName: "Entry hash", hide: true, width: 176, cellRenderer: HashCell, sortable: false },
 ];
 
 const defaultColDef: ColDef<AuditRow> = { resizable: true, sortable: true, suppressHeaderMenuButton: true };
@@ -122,7 +123,7 @@ export function AuditLog() {
     if (event.data) setSelected(event.data);
   }, []);
 
-  const exportCsv = () => grid.current?.api.exportDataAsCsv({ fileName: `paycurb-audit-${new Date().toISOString().slice(0, 10)}.csv` });
+  const exportCsv = () => grid.current?.api.exportDataAsCsv({ allColumns: true, fileName: `paycurb-audit-${new Date().toISOString().slice(0, 10)}.csv` });
 
   const progress = useMemo(() => {
     if (done) return `${count(rows.length)} entries`;
@@ -174,6 +175,7 @@ export function AuditLog() {
           defaultColDef={defaultColDef}
           getRowId={(p) => String(p.data.seq)}
           quickFilterText={search}
+          includeHiddenColumnsInQuickFilter
           loading={loading && rows.length === 0}
           overlayNoRowsTemplate="<span>Nothing has been decided yet. Every decision the engine makes is written here as it happens.</span>"
           onRowClicked={onRowClicked}
@@ -186,7 +188,7 @@ export function AuditLog() {
         />
       </div>
       <p className="small muted" style={{ marginTop: 10 }}>
-        Select a row, or press Enter on it, to see the whole entry and its hashes.
+        Select a row, or press Enter on it, for the PayPal reference and the hashes.
       </p>
       <Drawer open={selected !== null} title={shown ? `Entry ${shown.seq}` : "Entry"} onClose={() => setSelected(null)}>
         {shown && <AuditRecord row={shown} />}
