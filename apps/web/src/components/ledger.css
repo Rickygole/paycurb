@@ -1682,6 +1682,28 @@ a.figure:hover .figure-cap {
   }
 }
 
+.audit-grid .ag-row {
+  cursor: pointer;
+  transition: background-color var(--t-hover) ease;
+}
+
+.audit-grid .ag-row::before {
+  transition: background-color var(--t-hover) ease;
+}
+
+.audit-grid .ag-cell.mono {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.audit-grid .ag-header-cell-text {
+  font-weight: 400;
+}
+
+.audit-grid .status {
+  height: 24px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .burst {
     animation: burst 420ms var(--ease-out) both;

@@ -4,16 +4,18 @@ import { AllCommunityModule, ModuleRegistry, type ColDef, type RowClickedEvent }
 import { AgGridReact } from "ag-grid-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorText } from "@/lib/api";
-import { count, dollars, formatDateTime, merchantName } from "@/lib/format";
+import { clock, count, dollars, formatDateTime, fullReason, hasAmount, merchantName } from "@/lib/format";
 import type { AuditPage, AuditRow } from "@/lib/types";
-import { CopyButton } from "../CopyButton";
 import { DecisionBadge, outcomeLabel } from "../DecisionBadge";
-import { Drawer, Field } from "../Drawer";
+import { Drawer, Field, useLast } from "../Drawer";
+import { HashValue } from "../feed/DecisionDrawer";
+import { RouteStrip } from "../feed/RouteStrip";
+import { Amount } from "../feed/DecisionCard";
 import { DownloadIcon } from "../icons";
-import { Page, PageHeader } from "../Shell";
+import { PageHeader } from "../Shell";
 import { ErrorState } from "../states";
 import { ChainStatus } from "./ChainStatus";
-import { DecisionCell, HashCell } from "./cells";
+import { DecisionCell, HashCell, MissingCell } from "./cells";
 import { gridTheme } from "./gridTheme";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -21,37 +23,49 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 const PAGE_LIMIT = 1000;
 
 const columns: ColDef<AuditRow>[] = [
-  { field: "seq", headerName: "Seq", width: 104, filter: "agNumberColumnFilter", sort: "desc", cellClass: "num" },
-  { field: "ts", headerName: "Time", width: 215, valueFormatter: (p) => (p.value ? formatDateTime(p.value) : ""), filter: "agTextColumnFilter", cellClass: "num" },
-  { field: "tool", headerName: "Tool", width: 140, filter: true, cellClass: "font-mono" },
-  { field: "kind", headerName: "Kind", width: 110, filter: true },
-  { colId: "merchant", headerName: "Merchant", width: 170, valueGetter: (p) => (p.data ? merchantName(p.data.merchant_id) : ""), filter: true },
+  { field: "seq", headerName: "Entry", width: 84, sort: "desc", type: "rightAligned", cellClass: ["num", "ag-right-aligned-cell"] },
   {
-    colId: "amount",
-    headerName: "Amount",
-    width: 120,
-    type: "rightAligned",
-    valueGetter: (p) => (p.data ? p.data.amount_cents / 100 : null),
-    valueFormatter: (p) => (p.value == null ? "" : dollars(Math.round(p.value * 100))),
-    filter: "agNumberColumnFilter",
+    field: "ts",
+    headerName: "Time",
+    width: 96,
+    valueFormatter: (p) => (p.value ? clock(p.value) : ""),
+    tooltipValueGetter: (p) => (p.value ? formatDateTime(p.value) : ""),
     cellClass: "num",
   },
   {
     field: "decision",
     headerName: "Decision",
-    width: 178,
+    width: 160,
+    minWidth: 150,
     cellRenderer: DecisionCell,
-    filter: true,
-    filterValueGetter: (p) => (p.data ? outcomeLabel(p.data.decision) : ""),
+    valueFormatter: (p) => outcomeLabel(p.value),
     getQuickFilterText: (p) => outcomeLabel(p.value),
   },
-  { field: "rule_id", headerName: "Rule", width: 90, filter: true, cellClass: "font-mono" },
-  { field: "reason", headerName: "Reason", flex: 1, minWidth: 280, filter: true, tooltipField: "reason" },
-  { field: "paypal_ref", headerName: "PayPal ref", width: 190, filter: true, cellClass: "font-mono", valueFormatter: (p) => p.value ?? "" },
-  { field: "entry_hash", headerName: "Entry hash", width: 180, cellRenderer: HashCell, sortable: false, filter: true },
+  { colId: "merchant", headerName: "Merchant", width: 150, valueGetter: (p) => (p.data ? merchantName(p.data.merchant_id) : "") },
+  {
+    colId: "amount",
+    headerName: "Amount",
+    width: 108,
+    type: "rightAligned",
+    valueGetter: (p) => (p.data && hasAmount(p.data.amount_cents) ? p.data.amount_cents / 100 : null),
+    valueFormatter: (p) => (p.value == null ? "" : dollars(Math.round(p.value * 100))),
+    cellRendererSelector: (p) => (p.value == null ? { component: MissingCell } : undefined),
+    cellClass: ["num", "ag-right-aligned-cell"],
+  },
+  { field: "rule_id", headerName: "Rule", width: 68 },
+  { colId: "reason", headerName: "Reason", flex: 1, minWidth: 180, valueGetter: (p) => (p.data ? fullReason(p.data) : ""), tooltipValueGetter: (p) => p.value },
+  {
+    field: "paypal_ref",
+    headerName: "PayPal reference",
+    width: 160,
+    cellClass: "mono",
+    valueFormatter: (p) => p.value ?? "",
+    cellRendererSelector: (p) => (p.value ? undefined : { component: MissingCell }),
+  },
+  { field: "entry_hash", headerName: "Entry hash", width: 176, cellRenderer: HashCell, sortable: false },
 ];
 
-const defaultColDef: ColDef<AuditRow> = { resizable: true, sortable: true };
+const defaultColDef: ColDef<AuditRow> = { resizable: true, sortable: true, suppressHeaderMenuButton: true };
 
 export function AuditLog() {
   const grid = useRef<AgGridReact<AuditRow>>(null);
@@ -62,6 +76,7 @@ export function AuditLog() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<AuditRow | null>(null);
+  const shown = useLast(selected);
   const generation = useRef(0);
 
   const loadFrom = useCallback((start: string | null) => {
@@ -110,53 +125,47 @@ export function AuditLog() {
   const exportCsv = () => grid.current?.api.exportDataAsCsv({ fileName: `paycurb-audit-${new Date().toISOString().slice(0, 10)}.csv` });
 
   const progress = useMemo(() => {
-    if (done) return `All ${count(rows.length)} entries loaded`;
-    if (loading) return `Loading entries... ${count(rows.length)} so far`;
+    if (done) return `${count(rows.length)} entries, oldest at the bottom`;
+    if (loading) return `Loading entries, ${count(rows.length)} so far`;
     return `${count(rows.length)} entries loaded, more on the server`;
   }, [done, loading, rows.length]);
 
   return (
-    <Page wide>
+    <>
       <PageHeader
-        title="Audit Log"
-        description="Every decision, in order, in an append only hash chain. Each entry includes the hash of the one before it, so any edit breaks the chain."
+        title="Audit"
+        description="Every decision in order. Each entry carries the hash of the one before it, so an edit anywhere breaks the chain."
         actions={<ChainStatus />}
       />
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-        <div className="w-full max-w-sm">
-          <label htmlFor="audit-search" className="label">
-            Search all columns
-          </label>
-          <input
-            id="audit-search"
-            type="search"
-            className="input"
-            placeholder="Merchant, rule, reason, PayPal ref..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <p role="status" className="text-sm text-muted num">
-            {progress}
-          </p>
-          {!loading && (
-            <button type="button" className="btn-secondary" onClick={resume}>
-              {done ? "Check for new entries" : "Load more"}
-            </button>
-          )}
-          <button type="button" className="btn-secondary" onClick={exportCsv} disabled={rows.length === 0}>
-            <DownloadIcon size={15} />
-            Export CSV
+      <div className="toolbar" style={{ marginTop: 0, marginBottom: 12 }}>
+        <input
+          type="search"
+          className="input"
+          style={{ width: "min(360px, 100%)", height: 36 }}
+          aria-label="Search the audit log"
+          placeholder="Search merchant, rule, reason or reference"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+        <p role="status" className="muted grow">
+          {progress}
+        </p>
+        {!loading && (
+          <button type="button" className="btn btn-quiet btn-sm" onClick={resume}>
+            {done ? "Check for new entries" : "Load more"}
           </button>
-        </div>
+        )}
+        <button type="button" className="btn btn-sm" onClick={exportCsv} disabled={rows.length === 0}>
+          <DownloadIcon size={15} />
+          Export CSV
+        </button>
       </div>
       {error && (
-        <div className="mb-3">
-          <ErrorState title="Could not load audit entries" message={error} onRetry={resume} />
+        <div style={{ marginBottom: 12 }}>
+          <ErrorState title="Audit entries did not load" message={error} onRetry={resume} />
         </div>
       )}
-      <div className="h-[max(440px,calc(100dvh-300px))]">
+      <div className="audit-grid" style={{ height: "max(420px, calc(100dvh - 228px))" }}>
         <AgGridReact<AuditRow>
           ref={grid}
           theme={gridTheme}
@@ -165,78 +174,64 @@ export function AuditLog() {
           defaultColDef={defaultColDef}
           getRowId={(p) => String(p.data.seq)}
           quickFilterText={search}
-          pagination
-          paginationPageSize={100}
-          paginationPageSizeSelector={[50, 100, 250, 500]}
           loading={loading && rows.length === 0}
-          overlayNoRowsTemplate="<span>No audit entries yet. Every decision the engine makes is written here as it happens.</span>"
+          overlayNoRowsTemplate="<span>Nothing has been decided yet. Every decision the engine makes is written here as it happens.</span>"
           onRowClicked={onRowClicked}
           onCellKeyDown={(event) => {
             const key = (event.event as KeyboardEvent | null)?.key;
             if (key === "Enter" && event.data) setSelected(event.data);
           }}
-          rowClass="cursor-pointer"
-          tooltipShowDelay={400}
+          rowClass="audit-row"
+          tooltipShowDelay={300}
         />
       </div>
-      <footer className="mt-4 flex flex-wrap justify-between gap-2 text-xs text-muted">
-        <span>Click a row or press Enter on it to see the full record.</span>
-        <span>Audit table built with AG Grid Community.</span>
-      </footer>
-      <Drawer open={!!selected} title={selected ? `Audit entry ${selected.seq}` : "Audit entry"} onClose={() => setSelected(null)}>
-        {selected && <AuditRecord row={selected} />}
+      <p className="small muted" style={{ marginTop: 10 }}>
+        Select a row, or press Enter on it, to see the whole entry and its hashes.
+      </p>
+      <Drawer open={selected !== null} title={shown ? `Entry ${shown.seq}` : "Entry"} onClose={() => setSelected(null)}>
+        {shown && <AuditRecord row={shown} />}
       </Drawer>
-    </Page>
-  );
-}
-
-function HashField({ label, value }: { label: string; value: string | null }) {
-  return (
-    <Field label={label} mono>
-      {value ? (
-        <span className="flex items-start gap-1">
-          <span className="min-w-0 break-all">{value}</span>
-          <CopyButton text={value} label={`Copy ${label.toLowerCase()}`} />
-        </span>
-      ) : (
-        <span className="font-sans text-muted">None</span>
-      )}
-    </Field>
+    </>
   );
 }
 
 function AuditRecord({ row }: { row: AuditRow }) {
   return (
-    <div className="space-y-5">
-      <div className="space-y-2">
-        <DecisionBadge decision={row.decision} />
-        <p className="text-[15px] leading-relaxed">{row.reason}</p>
-      </div>
-      <dl>
-        <Field label="Seq">{row.seq}</Field>
-        <Field label="Time">{formatDateTime(row.ts)}</Field>
-        <Field label="Merchant">{merchantName(row.merchant_id)}</Field>
-        <Field label="Amount">
-          <span className="font-semibold num">{dollars(row.amount_cents)}</span>
-        </Field>
-        <Field label="Tool" mono>
-          {row.tool}
-        </Field>
-        <Field label="Kind">{row.kind}</Field>
-        <Field label="Rule" mono>
-          {row.rule_id}
-        </Field>
-        <Field label="Policy version">v{row.policy_version}</Field>
-        <Field label="PayPal reference" mono>
-          {row.paypal_ref ?? <span className="font-sans text-muted">None. This call did not reach PayPal.</span>}
-        </Field>
-        <Field label="Action id" mono>
-          {row.action_id}
-        </Field>
-        <HashField label="Payload hash" value={row.payload_hash} />
-        <HashField label="Previous hash" value={row.prev_hash} />
-        <HashField label="Entry hash" value={row.entry_hash} />
-      </dl>
-    </div>
+    <>
+      <section>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <DecisionBadge decision={row.decision} />
+          <span className="num" style={{ fontSize: 28, lineHeight: "34px", fontWeight: 500 }}>
+            <Amount cents={row.amount_cents} />
+          </span>
+        </div>
+        <p style={{ marginTop: 16, fontSize: 18, lineHeight: "26px", fontWeight: 500 }}>{fullReason(row)}</p>
+        <div style={{ marginTop: 16 }}>
+          <RouteStrip decision={row.decision} size="large" />
+        </div>
+      </section>
+      <section>
+        <dl>
+          <Field label="Time">{formatDateTime(row.ts)}</Field>
+          <Field label="Merchant">{merchantName(row.merchant_id)}</Field>
+          <Field label="Tool">{row.tool}</Field>
+          <Field label="Rule">{row.rule_id}</Field>
+          <Field label="Policy version">v{row.policy_version}</Field>
+          <Field label="PayPal reference">{row.paypal_ref ? <span className="mono">{row.paypal_ref}</span> : <span className="muted">None. This call never reached PayPal.</span>}</Field>
+          <Field label="Action id">
+            <span className="mono">{row.action_id}</span>
+          </Field>
+          <Field label="Payload hash">
+            <HashValue value={row.payload_hash} label="payload hash" />
+          </Field>
+          <Field label="Previous hash">
+            <HashValue value={row.prev_hash} label="previous hash" />
+          </Field>
+          <Field label="Entry hash">
+            <HashValue value={row.entry_hash} label="entry hash" />
+          </Field>
+        </dl>
+      </section>
+    </>
   );
 }
