@@ -4,34 +4,35 @@ import { useCallback, useEffect, useState } from "react";
 import { api, errorText } from "@/lib/api";
 import { count } from "@/lib/format";
 import type { ChainCheck } from "@/lib/types";
-import { AlertIcon, RefreshIcon, ShieldCheckIcon, ShieldOffIcon } from "../icons";
-
-const pill = "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-semibold";
+import { AlertIcon, ShieldCheckIcon, ShieldOffIcon } from "../icons";
 
 function Badge({ check, error, busy }: { check: ChainCheck | null; error: string | null; busy: boolean }) {
-  if (busy && !check) return <span className={`${pill} bg-surface-3 text-muted`}>Verifying chain...</span>;
+  if (busy && !check) return <span className="status">Checking the chain</span>;
   if (error) {
     return (
-      <span className={`${pill} bg-escalate-soft text-escalate`} title={error}>
-        <AlertIcon size={15} />
-        Could not verify chain
+      <span className="status" title={error}>
+        <AlertIcon size={14} />
+        Chain not checked
       </span>
     );
   }
   if (!check) return null;
   if (check.ok) {
     return (
-      <span className={`${pill} bg-allow-soft text-allow`}>
-        <ShieldCheckIcon size={15} />
-        Chain verified
-        <span className="font-normal num">({count(check.checked)} entries)</span>
+      <span key={`ok-${check.checked}`} className="status status-allow arrive">
+        <ShieldCheckIcon size={14} />
+        <span>
+          Chain verified, <span className="num">{count(check.checked)}</span> entries
+        </span>
       </span>
     );
   }
   return (
-    <span className={`${pill} bg-block-soft text-block`}>
-      <ShieldOffIcon size={15} />
-      Chain broken at seq <span className="num">{check.first_broken_seq ?? "unknown"}</span>
+    <span key="broken" className="status status-block arrive">
+      <ShieldOffIcon size={14} />
+      <span>
+        Chain broken at entry <span className="num">{check.first_broken_seq ?? "unknown"}</span>
+      </span>
     </span>
   );
 }
@@ -61,19 +62,21 @@ export function ChainStatus() {
     load();
   }, [load]);
 
-  function verify() {
-    setBusy(true);
-    load();
-  }
-
   return (
-    <div className="flex items-center gap-2">
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <span role="status" aria-live="polite">
         <Badge check={check} error={error} busy={busy} />
       </span>
-      <button type="button" className="btn-secondary" onClick={verify} disabled={busy}>
-        <RefreshIcon size={15} className={busy ? "animate-spin" : undefined} />
-        {busy ? "Verifying..." : "Verify"}
+      <button
+        type="button"
+        className="btn btn-sm"
+        onClick={() => {
+          setBusy(true);
+          load();
+        }}
+        disabled={busy}
+      >
+        {busy ? "Verifying" : "Verify"}
       </button>
     </div>
   );
