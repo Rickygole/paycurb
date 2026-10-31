@@ -1,0 +1,22 @@
+[
+  { "text": "Never spend more than $100 on a single purchase.", "expected": { "per_transaction_limit_cents": 10000 } },
+  { "text": "No single purchase over $75.50.", "expected": { "per_transaction_limit_cents": 7550 } },
+  { "text": "Ask me before any purchase of $50 or more.", "expected": { "auto_approve_below_cents": 5000 } },
+  { "text": "Anything under $20.00 can go through without asking me.", "expected": { "auto_approve_below_cents": 2000 } },
+  { "text": "Cap my spending at $250 a day.", "expected": { "daily_limit_cents": 25000 } },
+  { "text": "Daily budget is $120.75.", "expected": { "daily_limit_cents": 12075 } },
+  { "text": "No more than $40 per hour at any one merchant.", "expected": { "merchant_window_limit": { "cents": 4000, "window_minutes": 60 } } },
+  { "text": "At most 3 purchases an hour.", "expected": { "velocity": { "max_transactions": 3, "window_minutes": 60 } } },
+  { "text": "No subscriptions or recurring charges.", "expected": { "block_recurring": true } },
+  { "text": "Subscriptions are fine with me.", "expected": { "block_recurring": false } },
+  { "text": "Ask me before refunds.", "expected": { "refunds": "escalate" } },
+  { "text": "Never issue refunds.", "expected": { "refunds": "block" } },
+  { "text": "Only buy from Acme Office and Paper Co.", "expected": { "merchant_allowlist": ["acme-office", "paper-co"] } },
+  { "text": "Only buy from Acme Office.", "expected": { "merchant_allowlist": ["acme-office"] } },
+  { "text": "Never buy from Luxury Watches.", "expected": { "merchant_blocklist": ["luxury-watches"] } },
+  { "text": "Don't buy more than 3 of any one item.", "expected": { "max_quantity_per_line": 3 } },
+  { "text": "Block payouts, and ask me before any refund.", "expected": { "payouts": "block", "refunds": "escalate" } },
+  { "text": "Only buy from Acme Office, never more than $30 per purchase, and no more than $90 a day.", "expected": { "merchant_allowlist": ["acme-office"], "per_transaction_limit_cents": 3000, "daily_limit_cents": 9000 } },
+  { "text": "Spend a few hundred a day at most.", "expected": { "asks_question": true, "daily_limit_cents": 10000 } },
+  { "text": "Keep purchases reasonable and don't go crazy.", "expected": { "asks_question": true, "per_transaction_limit_cents": 5000 } }
+]
