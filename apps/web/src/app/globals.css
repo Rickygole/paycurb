@@ -238,6 +238,16 @@ body {
   animation: enter 220ms ease-out both;
 }
 
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.bar-grow {
+  animation: bar-grow 600ms ease-out both;
+}
+
 .animate-skeleton {
   animation: pulse-soft 1.4s ease-in-out infinite;
 }
