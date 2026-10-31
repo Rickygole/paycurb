@@ -230,8 +230,11 @@ function openApproval(feed: Feed, nowMs: number): ApprovalCard {
 }
 
 export function nextScenario() {
-  if (stats().remaining_cents < 15000) return pick(routine.slice(7));
-  return weighted();
+  const current = stats();
+  const quiet = routine.filter((_, index) => index !== 5 && index !== 6 && index !== 11);
+  if (current.remaining_cents < 15000) return pick(current.pending_approvals >= 4 ? quiet.slice(5) : routine.slice(7));
+  const next = weighted();
+  return current.pending_approvals >= 4 && !quiet.includes(next) ? routine[0] : next;
 }
 
 export function expireApprovals(nowMs: number) {
