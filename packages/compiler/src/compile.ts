@@ -2,6 +2,7 @@ import type { Policy } from "@paycurb/engine";
 import type { LlmClient, Message, Reply } from "@paycurb/llm";
 import { z } from "zod";
 import { withStrictDefaults } from "./defaults";
+import { withInferredCategories } from "./categories";
 import { readback } from "./readback";
 import { policySchema } from "./schema";
 import { policyTool, TOOL_NAME } from "./tool";
@@ -30,7 +31,7 @@ function toolInput(reply: Reply): Record<string, unknown> {
 function build(reply: Reply): Compiled {
   const { questions, ...fields } = toolInput(reply);
   const asked = questionsSchema.parse(questions ?? []);
-  const policy = policySchema.parse(withStrictDefaults(fields));
+  const policy = policySchema.parse(withInferredCategories(withStrictDefaults(fields)));
   return { policy, readback: readback(policy), questions: asked };
 }
 
@@ -56,6 +57,7 @@ export async function compilePolicy(text: string, llm: LlmClient, model: string)
       system: SYSTEM,
       messages,
       tools: [policyTool],
+      toolChoice: { type: "tool", name: TOOL_NAME },
       temperature: 0,
       maxTokens: 1024,
     });
