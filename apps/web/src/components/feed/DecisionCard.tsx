@@ -14,11 +14,11 @@ export function DecisionCard({ item, fresh, onOpen }: { item: Feed; fresh: boole
       <button
         type="button"
         onClick={() => onOpen(item)}
-        className={`card relative flex w-full items-start gap-4 overflow-hidden px-4 py-3 pl-5 text-left transition-colors before:absolute before:inset-y-0 before:left-0 before:w-1 hover:border-line-strong hover:bg-surface-2 ${stripes[item.decision] ?? ""}`}
+        className={`card relative flex w-full flex-col gap-2 overflow-hidden sm:flex-row sm:items-start sm:gap-4 px-4 py-3 pl-5 text-left transition-colors before:absolute before:inset-y-0 before:left-0 before:w-1 hover:border-line-strong hover:bg-surface-2 ${stripes[item.decision] ?? ""}`}
       >
-        <div className="w-36 shrink-0">
+        <div className="flex shrink-0 items-center gap-3 sm:block sm:w-36">
           <DecisionBadge decision={item.decision} />
-          <p className="mt-1.5 text-xs text-muted num">{formatTime(item.ts)}</p>
+          <p className="text-xs text-muted num sm:mt-1.5">{formatTime(item.ts)}</p>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
