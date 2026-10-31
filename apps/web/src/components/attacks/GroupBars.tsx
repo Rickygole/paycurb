@@ -8,7 +8,8 @@ function Share({ hits, scenarios, index, withPaycurb }: { hits: number | null; s
   return (
     <span className="share">
       <span className="num">
-        {hits} of {scenarios} <span className="muted">· {percent(rate)}</span>
+        {hits} of {scenarios}
+        <span className="muted wide-only"> · {percent(rate)}</span>
       </span>
       <span className="share-track" aria-hidden="true">
         {rate > 0 && <span className={`share-fill${withPaycurb ? " with" : ""}`} style={{ width: `${rate * 100}%`, marginLeft: "auto", "--i": index } as React.CSSProperties} />}
@@ -23,7 +24,7 @@ export function GroupBars({ groups }: { groups: AttackGroup[] }) {
     <section className="panel" aria-labelledby="groups-title">
       <header className="panel-head">
         <h2 id="groups-title">By attack group</h2>
-        <p className="small muted">Scenarios where money moved beyond policy</p>
+        <p className="small muted wide-only">Scenarios where money moved beyond policy</p>
       </header>
       <ul className="groups">
         <li className="group-row head" aria-hidden="true">

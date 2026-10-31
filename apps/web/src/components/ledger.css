@@ -1875,7 +1875,7 @@ a.figure:hover .figure-cap {
     text-align: left;
   }
   .group-row {
-    grid-template-columns: minmax(0, 1fr) 96px 96px;
+    grid-template-columns: minmax(0, 1fr) 76px 76px;
     gap: 12px;
     padding: 8px 16px;
   }
