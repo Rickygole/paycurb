@@ -113,7 +113,8 @@ export function createApp({ deps, startAttackRun, compile = compileWithModel }: 
     }
   });
   api.post("/attacks/run", (c) => {
-    if (!config.demoMode || !startAttackRun) return c.json({ error: "demo mode is off" }, 403);
+    if (!config.demoMode) return c.json({ error: "demo mode is off" }, 403);
+    if (!startAttackRun) return c.json({ error: "the suite cannot run on this deployment, see the latest report" }, 501);
     startAttackRun();
     return c.json({ started: true });
   });
