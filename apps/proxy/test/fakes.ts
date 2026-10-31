@@ -1,9 +1,10 @@
-import type { OrderResult, PayPalGateway, RefundResult } from "../src/paypal";
+import { PayPalError, type OrderResult, type PayPalGateway, type RefundResult } from "../src/paypal";
 
 export interface FakeGateway extends PayPalGateway {
   orders: { amountCents: number; requestId: string }[];
   refunds: { captureId: string; amountCents: number }[];
   failNext: boolean;
+  rejectNext: boolean;
 }
 
 export function fakeGateway(): FakeGateway {
@@ -12,7 +13,12 @@ export function fakeGateway(): FakeGateway {
     orders: [],
     refunds: [],
     failNext: false,
+    rejectNext: false,
     async createOrder({ amountCents, requestId }): Promise<OrderResult> {
+      if (gateway.rejectNext) {
+        gateway.rejectNext = false;
+        throw new PayPalError(422, "UNPROCESSABLE_ENTITY");
+      }
       if (gateway.failNext) {
         gateway.failNext = false;
         throw new Error("paypal down");

@@ -77,7 +77,7 @@ describe("dashboard api", () => {
 
   it("verifies the audit chain and pages rows", async () => {
     await toolCall("transfer_funds", {});
-    expect(await (await call("/api/audit/verify")).json()).toMatchObject({ ok: true, checked: 1 });
+    expect(await (await call("/api/audit/verify")).json()).toMatchObject({ ok: true, checked: 2 });
     const page = await (await call("/api/audit?limit=1")).json();
     expect(page.rows).toHaveLength(1);
     expect(page.next_cursor).toBe(String(page.rows[0].seq));

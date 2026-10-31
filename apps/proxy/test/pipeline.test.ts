@@ -208,8 +208,8 @@ describe("idempotency and failures", () => {
     expect(gateway.orders).toHaveLength(1);
   });
 
-  it("releases the reservation when PayPal fails", async () => {
-    gateway.failNext = true;
+  it("releases the reservation when PayPal rejects the request", async () => {
+    gateway.rejectNext = true;
     expect(await buy(order(12, acme, "PEN-12"))).toMatchObject({ decision: "block", rule_id: "R00" });
     const client = await getPool().connect();
     try {
@@ -218,6 +218,22 @@ describe("idempotency and failures", () => {
       client.release();
     }
     expect(await buy(order(12, acme, "PEN-12"))).toMatchObject({ decision: "allow" });
+  });
+
+  it("keeps the amount reserved and never charges twice when the PayPal outcome is unknown", async () => {
+    gateway.failNext = true;
+    const first = await buy(order(12, acme, "PEN-12"));
+    expect(first).toMatchObject({ decision: "block", rule_id: "R00" });
+    expect(first.reason).toContain("unknown");
+    const client = await getPool().connect();
+    try {
+      expect(await dailySpentCents(client, clock)).toBe(1200);
+    } finally {
+      client.release();
+    }
+    const retry = await buy(order(12, acme, "PEN-12"));
+    expect(retry).toMatchObject({ decision: "block", rule_id: "R11" });
+    expect(gateway.orders).toHaveLength(0);
   });
 });
 
