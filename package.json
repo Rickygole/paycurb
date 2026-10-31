@@ -5,6 +5,7 @@
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "migrate": "pnpm --filter @paycurb/proxy migrate",
-    "proxy": "pnpm --filter @paycurb/proxy start"
+    "proxy": "pnpm --filter @paycurb/proxy start",
+    "attacks": "pnpm --filter @paycurb/attacks start"
   }
 }
