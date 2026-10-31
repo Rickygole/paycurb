@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import type { Policy } from "@paycurb/engine";
+import { appendAudit } from "./audit";
 
 export const defaultPolicy: Policy = {
   version: 1,
@@ -49,6 +50,19 @@ export async function activatePolicy(client: PoolClient, policy: Policy, sourceT
     sourceText,
     JSON.stringify({ ...policy, version: next }),
   ]);
+  await appendAudit(client, {
+    action_id: null,
+    tool: "policy",
+    kind: "policy",
+    amount_cents: null,
+    merchant_id: null,
+    decision: "allow",
+    rule_id: "R99",
+    reason: `Policy version ${next} activated`,
+    policy_version: next,
+    payload_hash: null,
+    paypal_ref: null,
+  });
   return next;
 }
 
