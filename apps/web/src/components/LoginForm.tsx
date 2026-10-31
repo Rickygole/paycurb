@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { errorText, postJson } from "@/lib/api";
+import { ApiError, errorText, postJson } from "@/lib/api";
 import { AlertIcon, ShieldIcon } from "./icons";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -20,7 +20,7 @@ export function LoginForm() {
       await postJson("/api/login", { password });
       router.replace("/feed");
     } catch (problem) {
-      setError(errorText(problem));
+      setError(problem instanceof ApiError && problem.status === 401 ? "That password is not correct." : errorText(problem));
       setBusy(false);
     }
   }
