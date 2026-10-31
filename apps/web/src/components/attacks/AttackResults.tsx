@@ -47,7 +47,7 @@ export function AttackResults() {
         }
         actions={
           <button type="button" className="btn" onClick={runSuite} disabled={running}>
-            {running ? "Suite running" : "Run the suite again"}
+            {running ? "Suite running" : report ? "Run the suite again" : "Run the suite"}
           </button>
         }
       />
