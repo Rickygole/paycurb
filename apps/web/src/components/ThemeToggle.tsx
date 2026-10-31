@@ -6,7 +6,7 @@ import { MonitorIcon, MoonIcon, SunIcon } from "./icons";
 
 type Theme = "system" | "light" | "dark";
 const order: Theme[] = ["system", "light", "dark"];
-const names: Record<Theme, string> = { system: "System theme", light: "Light theme", dark: "Dark theme" };
+const names: Record<Theme, string> = { system: "Match the system", light: "Light", dark: "Dark" };
 
 const listeners = new Set<() => void>();
 
@@ -31,20 +31,24 @@ function applyTheme(theme: Theme) {
   listeners.forEach((listener) => listener());
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ variant = "icon" }: { variant?: "icon" | "row" }) {
   const theme = useSyncExternalStore(subscribe, readTheme, () => "system" as Theme);
   const next = order[(order.indexOf(theme) + 1) % order.length];
   const Icon = theme === "light" ? SunIcon : theme === "dark" ? MoonIcon : MonitorIcon;
+  const label = `Theme: ${names[theme].toLowerCase()}. Switch to ${names[next].toLowerCase()}`;
+
+  if (variant === "row") {
+    return (
+      <button type="button" className="menu-item" onClick={() => applyTheme(next)} aria-label={label}>
+        <Icon size={16} />
+        <span>Theme: {names[theme].toLowerCase()}</span>
+      </button>
+    );
+  }
 
   return (
-    <button
-      type="button"
-      onClick={() => applyTheme(next)}
-      className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted md:w-full hover:bg-surface-2 hover:text-fg"
-      aria-label={`${names[theme]}. Switch to ${names[next].toLowerCase()}`}
-    >
-      <Icon size={16} />
-      <span>{names[theme]}</span>
+    <button type="button" className="btn btn-icon" onClick={() => applyTheme(next)} aria-label={label} title={label}>
+      <Icon size={17} />
     </button>
   );
 }
