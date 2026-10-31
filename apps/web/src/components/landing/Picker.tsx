@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent } from "react";
-import { decide, scenarios } from "./scenarios";
+import { decide, demoPolicy, scenarios } from "./scenarios";
 
 const verdicts = { allow: "Allowed.", escalate: "Held for you.", block: "Blocked." } as const;
 const words = { allow: "allowed", escalate: "held", block: "blocked" } as const;
@@ -25,7 +25,7 @@ export function Picker() {
   }
 
   return (
-    <section id="try" className={`field try is-${result.decision}`} data-chapter data-ink="dark" aria-labelledby="try-title">
+    <section id="try" className={`band try is-${result.decision}`} aria-labelledby="try-title">
       <div className="try-head">
         <h2 id="try-title">
           This purchase is{" "}
@@ -59,7 +59,7 @@ export function Picker() {
         <div className="verdict" aria-live="polite">
           <strong key={`${scenario.id}-${result.decision}`}>{verdicts[result.decision]}</strong>
           <p>{result.reason}</p>
-          <span className="rule">Rule {result.rule_id}</span>
+          <span className="rule">Rule {result.rule_id}, policy version {demoPolicy.version}</span>
         </div>
       </div>
     </section>

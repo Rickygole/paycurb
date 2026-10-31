@@ -3,6 +3,8 @@ import { join } from "node:path";
 
 export interface LandingReport {
   headline: { attack_scenarios: number; baseline_success: number; protected_success: number; money_lost_baseline_cents: number; money_lost_protected_cents: number; includes_group_a: boolean };
+  groups: { group: string; scenarios: number; baseline_success: number; protected_success: number; money_lost_baseline_cents: number }[];
+  limitations: { id: string; description: string }[];
   generated_at: string;
 }
 
