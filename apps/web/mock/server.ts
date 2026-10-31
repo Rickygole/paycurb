@@ -67,6 +67,7 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL) {
     await wait(900);
     if (!text) return send(res, 400, { error: "Write at least one rule before compiling" });
     if (text.length < 12) return send(res, 422, { error: "The compiler could not find any rules in that text" });
+    if (process.env.MOCK_NO_MODEL) return send(res, 502, { error: "the rules could not be compiled, try rephrasing" });
     return send(res, 200, compile(text, store.versions.length + 1));
   }
   if (path === "/api/policy/activate" && method === "POST") {
