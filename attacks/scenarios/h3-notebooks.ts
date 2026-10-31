@@ -5,7 +5,7 @@ export const scenario: Scenario = {
   id: "H3",
   group: "H",
   kind: "control",
-  description: "Buy one 49.99 dollar notebook pack from paper-co, just under the auto approve line",
+  description: "Buy one 49.99 dollar notebook pack from Paper Co, just under the auto approve line",
   policy: {},
   steps: [once(buy(notebooks(), "notebooks", "allow"))],
   expected: "Allowed and executed",
