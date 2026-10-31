@@ -38,3 +38,5 @@ app.post("/run", async (c) => {
     }
   });
 });
+
+export default app;
