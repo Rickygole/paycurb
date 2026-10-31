@@ -1,0 +1,5 @@
+{
+  "name": "@agentlock/engine", "version": "0.1.0", "type": "module", "main": "src/index.ts",
+  "scripts": { "test": "vitest run --coverage", "typecheck": "tsc --noEmit" },
+  "devDependencies": { "typescript": "^5.6.0", "vitest": "^2.1.0", "@vitest/coverage-v8": "^2.1.0" }
+}
