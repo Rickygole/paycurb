@@ -9,12 +9,12 @@ export async function runAgent(body: { task: string } | { preset: string }, onEv
   });
   if (!response.ok || !response.body) {
     const text = await response.text().catch(() => "");
-    let message = `The agent returned status ${response.status}`;
+    let message = `The agent answered with status ${response.status}. Check that the agent app is running.`;
     try {
       const parsed = JSON.parse(text);
       if (typeof parsed.error === "string") message = parsed.error;
     } catch {
-      if (text && text.length < 200) message = text;
+      message = `The agent answered with status ${response.status}. Check that the agent app is running.`;
     }
     throw new Error(message);
   }

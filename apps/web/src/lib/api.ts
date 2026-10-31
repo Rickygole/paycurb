@@ -19,7 +19,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   });
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = body && typeof body.error === "string" ? body.error : `Request failed with status ${response.status}`;
+    const message =
+      body && typeof body.error === "string" ? body.error : `The server answered with status ${response.status}. Check that the proxy is running.`;
     throw new ApiError(message, response.status);
   }
   return body as T;
