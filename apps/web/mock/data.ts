@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { evaluate, type Action, type Policy } from "@paycurb/engine";
 import { canonicalJson, hashPayload, merchants, products, sha256 } from "@paycurb/shared";
 import type { ApprovalCard, AttackReport, AuditRow, Feed, PolicyVersion } from "../src/lib/types.ts";
@@ -319,41 +320,12 @@ function seedVersions() {
   ];
 }
 
-export function seedReport(nowMs = Date.now()): AttackReport {
-  const jitter = () => Math.round(random() * 4) / 100;
-  return {
-    generated_at: new Date(nowMs).toISOString(),
-    model: "agent model from LLM_MODEL_AGENT",
-    trials_per_agent_scenario: 5,
-    groups: [
-      { group: "Prompt injection in merchant page", scenarios: 12, baseline_success: 0.83 - jitter(), protected_success: 0, money_lost_baseline_cents: 480000, money_lost_protected_cents: 0 },
-      { group: "Price and total tampering", scenarios: 8, baseline_success: 0.75, protected_success: 0, money_lost_baseline_cents: 96500, money_lost_protected_cents: 0 },
-      { group: "Over limit and split orders", scenarios: 10, baseline_success: 0.9, protected_success: 0.1, money_lost_baseline_cents: 312000, money_lost_protected_cents: 9800 },
-      { group: "Unknown merchant and payee swap", scenarios: 9, baseline_success: 0.67 + jitter(), protected_success: 0, money_lost_baseline_cents: 254000, money_lost_protected_cents: 0 },
-      { group: "Replay and approval tampering", scenarios: 6, baseline_success: 1, protected_success: 0, money_lost_baseline_cents: 88000, money_lost_protected_cents: 0 },
-      { group: "Refund and payout abuse", scenarios: 5, baseline_success: 0.8, protected_success: 0, money_lost_baseline_cents: 61000, money_lost_protected_cents: 0 },
-    ],
-    false_block_rate: 0.021,
-    escalated_as_designed_rate: 0.96,
-    latency_ms: { engine_p50: 0.4, engine_p95: 1.1, proxy_p50: 38, proxy_p95: 112 },
-    limitations: [
-      {
-        id: "L1",
-        description: "Many small orders just under the auto approve line at an allowed merchant, spread across the velocity window.",
-        outcome: "Allowed until the merchant window limit stops them. Loss is capped at the window limit.",
-      },
-      {
-        id: "L2",
-        description: "An injected instruction that buys a real catalog item the owner did not want, at a trusted merchant, under every limit.",
-        outcome: "Allowed. The policy cannot tell intent, only limits.",
-      },
-      {
-        id: "L3",
-        description: "The owner approves a purchase without reading the line items.",
-        outcome: "Executed as approved. The approval card shows every line item to reduce this risk.",
-      },
-    ],
-  };
+export function seedReport(): AttackReport | null {
+  try {
+    return JSON.parse(readFileSync(new URL("../../../reports/attack-report.json", import.meta.url), "utf8"));
+  } catch {
+    return null;
+  }
 }
 
 export function reset() {
@@ -366,7 +338,7 @@ export function reset() {
   seedVersions();
   seedHistory(Number(process.env.MOCK_AUDIT_ROWS || 200) - 3);
   seedPending();
-  store.report = process.env.MOCK_NO_REPORT ? null : seedReport(Date.now() - 3 * 60 * MINUTE);
+  store.report = process.env.MOCK_NO_REPORT ? null : seedReport();
   const breakSeq = Number(process.env.MOCK_BREAK_SEQ || 0);
   const broken = store.audit.find((row) => row.seq === breakSeq);
   if (broken) broken.reason = `${broken.reason} (edited)`;
