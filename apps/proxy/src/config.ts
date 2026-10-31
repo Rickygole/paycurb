@@ -4,9 +4,16 @@ function required(name: string): string {
   return value;
 }
 
+function appRoleUrl(): string {
+  const url = new URL(required("OWNER_DATABASE_URL"));
+  url.username = "paycurb_app";
+  url.password = required("APP_DB_PASSWORD");
+  return url.toString();
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 4000),
-  databaseUrl: () => required("DATABASE_URL"),
+  databaseUrl: () => process.env.DATABASE_URL ?? appRoleUrl(),
   ownerPassword: () => required("OWNER_PASSWORD"),
   sessionSecret: () => required("SESSION_SECRET"),
   demoMode: process.env.DEMO_MODE === "true",
