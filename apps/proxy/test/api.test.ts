@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/api";
 import { closePool, inTransaction } from "../src/db";
 import { defaultPolicy, activatePolicy } from "../src/policy";
@@ -7,7 +7,8 @@ import { fakeGateway } from "./fakes";
 import { resetDatabase } from "./helpers";
 
 const gateway = fakeGateway();
-const app = createApp({ deps: { gateway, now: () => new Date("2026-11-02T15:00:00Z") } });
+const compiled = { policy: defaultPolicy, readback: ["Block any single purchase above $100.00."], questions: [] };
+const app = createApp({ deps: { gateway, now: () => new Date("2026-11-02T15:00:00Z") }, compile: async (text) => (text === "fail" ? Promise.reject(new Error("model down")) : compiled) });
 let cookie = "";
 
 const call = (path: string, init: RequestInit = {}) => app.request(path, { ...init, headers: { cookie, "content-type": "application/json", ...init.headers } });
@@ -18,14 +19,17 @@ const toolCall = (name: string, args: unknown) =>
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } }),
   });
 
+beforeAll(async () => {
+  const login = await app.request("/api/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: process.env.OWNER_PASSWORD }) });
+  cookie = login.headers.get("set-cookie")?.split(";")[0] ?? "";
+});
+
 beforeEach(async () => {
   await resetDatabase();
   await inTransaction(async (client) => {
     await seedRegistry(client);
     await activatePolicy(client, defaultPolicy, "test");
   });
-  const login = await app.request("/api/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: process.env.OWNER_PASSWORD }) });
-  cookie = login.headers.get("set-cookie")?.split(";")[0] ?? "";
 });
 afterAll(closePool);
 
@@ -84,6 +88,17 @@ describe("dashboard api", () => {
     expect(good.status).toBe(200);
     const bad = await call("/api/policy/activate", { method: "POST", body: JSON.stringify({ policy: { ...defaultPolicy, surprise: 1 } }) });
     expect(bad.status).toBe(400);
+  });
+
+  it("compiles rules without activating them", async () => {
+    const response = await call("/api/policy/compile", { method: "POST", body: JSON.stringify({ text: "max 100 per purchase" }) });
+    expect(await response.json()).toEqual(compiled);
+    expect((await (await call("/api/policy/versions")).json())).toHaveLength(1);
+  });
+
+  it("reports a compile failure and rejects empty text", async () => {
+    expect((await call("/api/policy/compile", { method: "POST", body: JSON.stringify({ text: "fail" }) })).status).toBe(502);
+    expect((await call("/api/policy/compile", { method: "POST", body: JSON.stringify({ text: " " }) })).status).toBe(400);
   });
 
   it("resets the demo", async () => {
