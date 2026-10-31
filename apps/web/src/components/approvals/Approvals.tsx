@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
-import { dayLabel, clock, dollars, merchantName, secondsLeft } from "@/lib/format";
+import { dollars, merchantName, secondsLeft, stamp } from "@/lib/format";
 import { useEventStream } from "@/lib/stream";
-import type { ApprovalCard } from "@/lib/types";
+import type { ApprovalCard, Outcome } from "@/lib/types";
+import { DecisionBadge } from "../DecisionBadge";
 import { PageHeader } from "../Shell";
 import { EmptyState, ErrorState, Skeleton } from "../states";
-import { ApprovalCardView, executionTone } from "./ApprovalCardView";
+import { ApprovalCardView, ExecutionPill } from "./ApprovalCardView";
 
 function useNow() {
   const [now, setNow] = useState(() => Date.now());
@@ -24,6 +25,14 @@ const historyWords: Record<ApprovalCard["status"], string> = {
   rejected: "Rejected",
   expired: "Expired",
   executed: "Executed",
+};
+
+const historyTone: Record<ApprovalCard["status"], Outcome | null> = {
+  pending: "escalate",
+  approved: "allow",
+  rejected: "block",
+  expired: null,
+  executed: "allow",
 };
 
 function HeldSkeleton() {
@@ -45,7 +54,7 @@ function HeldSkeleton() {
 
 function WhatHappens() {
   return (
-    <aside className="panel panel-pad" aria-labelledby="approve-steps">
+    <aside aria-labelledby="approve-steps">
       <h2 id="approve-steps" className="section-title" style={{ fontSize: 16 }}>
         What happens on approve
       </h2>
@@ -63,7 +72,7 @@ function WhatHappens() {
 
 function History({ cards }: { cards: ApprovalCard[] }) {
   return (
-    <section className="panel" aria-labelledby="history-heading">
+    <section className="panel" aria-labelledby="history-heading" style={{ marginTop: 48 }}>
       <header className="panel-head">
         <h2 id="history-heading">Recently decided</h2>
         <p className="small muted">{cards.length === 0 ? "None yet" : `Last ${cards.length}`}</p>
@@ -92,11 +101,13 @@ function History({ cards }: { cards: ApprovalCard[] }) {
                 <tr key={card.id}>
                   <td>{merchantName(card.merchant_id, card.merchant_name)}</td>
                   <td className="n num">{dollars(card.amount_cents)}</td>
-                  <td>{historyWords[card.status] ?? card.status}</td>
-                  <td>{card.execution ? <span className={`status ${executionTone(card.execution.status)}`}>{card.execution.status}</span> : <span className="missing" role="img" aria-label="None" />}</td>
+                  <td>
+                    <DecisionBadge decision={historyTone[card.status] ?? null} label={historyWords[card.status] ?? card.status} />
+                  </td>
+                  <td>{card.execution ? <ExecutionPill status={card.execution.status} /> : <span className="missing" role="img" aria-label="None" />}</td>
                   <td>{card.execution?.paypal_ref ? <span className="mono">{card.execution.paypal_ref}</span> : <span className="missing" role="img" aria-label="None" />}</td>
                   <td className="n num muted" title={new Date(card.created_at).toLocaleString()}>
-                    {dayLabel(card.created_at)}, {clock(card.created_at)}
+                    {stamp(card.created_at)}
                   </td>
                 </tr>
               ))}
@@ -147,8 +158,8 @@ export function Approvals() {
         description={
           all.data
             ? waiting === 0
-              ? `No held orders are waiting for you${lapsed > 0 ? `. ${lapsed} expired before anyone decided, and nothing was paid. Reset the demo for a fresh one` : ""}. The policy sends an order here when it is over your approval line, from a new merchant, or a repeat.`
-              : `${waiting} held ${waiting === 1 ? "order is" : "orders are"} waiting for you. Nothing is paid until you approve.`
+              ? `Nothing is waiting.${lapsed > 0 ? ` ${lapsed} expired unanswered and nothing was paid.` : ""} Orders over your approval line, from a new merchant, or repeats land here.`
+              : `${waiting} held ${waiting === 1 ? "order is" : "orders are"} waiting. Nothing is paid until you approve.`
             : "Orders the policy held for you. Nothing is paid until you approve."
         }
       />

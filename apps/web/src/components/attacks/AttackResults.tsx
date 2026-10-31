@@ -42,8 +42,8 @@ export function AttackResults() {
         title="Attacks"
         description={
           report
-            ? `Did anything get past the policy? ${count(report.headline.attack_scenarios)} scripted attacks, each run once paying PayPal directly and once through Paycurb. Report from ${formatDateTime(report.generated_at)}.`
-            : "Did anything get past the policy? Scripted attacks, each run once paying PayPal directly and once through Paycurb."
+            ? `${count(report.headline.attack_scenarios)} scripted attacks, each run once straight to PayPal and once through Paycurb. Report from ${formatDateTime(report.generated_at)}.`
+            : "Scripted attacks, each run once straight to PayPal and once through Paycurb."
         }
         actions={
           <button type="button" className="btn" onClick={runSuite} disabled={running}>
@@ -86,8 +86,8 @@ function Report({ report }: { report: AttackReport }) {
   const errors = report.agent?.errors ?? [];
 
   return (
-    <div className="stack" style={{ gap: 24 }}>
-      <section className="panel verdict" aria-label="Headline">
+    <div className="stack" style={{ gap: 64 }}>
+      <section className="verdict" aria-label="Headline">
         <div className="verdict-figure rise" style={{ "--i": 0 } as React.CSSProperties}>
           <span className="big num" data-good={headline.protected_success === 0}>
             {headline.protected_success} of {headline.attack_scenarios}
@@ -108,8 +108,8 @@ function Report({ report }: { report: AttackReport }) {
 
       <div className="split">
         <GroupBars groups={report.groups} />
-        <aside className="stack" aria-label="Cost and control">
-          <section className="panel panel-pad" aria-labelledby="latency-title">
+        <aside className="stack" style={{ gap: 32 }} aria-label="Cost and control">
+          <section aria-labelledby="latency-title">
             <h2 id="latency-title" className="field-label muted" style={{ fontWeight: 400 }}>
               Time Paycurb adds
             </h2>
@@ -123,7 +123,7 @@ function Report({ report }: { report: AttackReport }) {
             </p>
           </section>
           {control && (
-            <section className="panel panel-pad" aria-labelledby="control-title">
+            <section aria-labelledby="control-title">
               <h2 id="control-title" className="field-label muted" style={{ fontWeight: 400 }}>
                 Legitimate purchases
               </h2>
@@ -146,7 +146,7 @@ function Report({ report }: { report: AttackReport }) {
       )}
 
       {(findings.length > 0 || errors.length > 0) && (
-        <section className="panel panel-pad" aria-labelledby="findings-title">
+        <section aria-labelledby="findings-title">
           <h2 id="findings-title" className="section-title" style={{ fontSize: 16 }}>
             Findings
           </h2>
@@ -173,7 +173,7 @@ function Report({ report }: { report: AttackReport }) {
         ) : (
           <div className="limits">
             {report.limitations.map((item) => (
-              <article key={item.id} className="panel">
+              <article key={item.id}>
                 <p style={{ fontWeight: 500 }}>
                   <span className="status" style={{ marginRight: 10 }}>
                     {item.id}
@@ -208,14 +208,14 @@ function Rate({ label, value }: { label: string; value: Proportion }) {
 
 function AgentBlock({ detail, model }: { detail: AgentGroupDetail; model: string | null }) {
   return (
-    <section className="panel" aria-labelledby="agent-title">
-      <header className="panel-head">
-        <h2 id="agent-title">Live agent, group A</h2>
-        <p className="small muted">
-          {detail.trials} trials per scenario{model ? `, model ${model}` : ""}
-        </p>
-      </header>
-      <div className="pair" style={{ padding: 20, gap: 32 }}>
+    <section aria-labelledby="agent-title">
+      <h2 id="agent-title" className="section-title">
+        Live agent, group A
+      </h2>
+      <p className="section-note">
+        {detail.trials} trials per scenario{model ? `, model ${model}` : ""}
+      </p>
+      <div className="pair" style={{ marginTop: 16, gap: 32 }}>
         <div>
           <h3 className="field-label">
             Without Paycurb <span className="muted small">({detail.valid_trials_baseline} valid trials)</span>

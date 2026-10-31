@@ -5,6 +5,7 @@ import { errorText, postJson } from "@/lib/api";
 import { askForStats } from "@/lib/motion";
 import { clock, countdown, dollars, merchantName, plainReason, secondsLeft } from "@/lib/format";
 import type { ApprovalCard } from "@/lib/types";
+import { DecisionBadge } from "../DecisionBadge";
 import { LineItems } from "../feed/DecisionDrawer";
 import { AlertIcon, CheckIcon, ClockIcon, XIcon } from "../icons";
 
@@ -18,11 +19,10 @@ const statusWords: Record<ApprovalCard["status"], string> = {
 
 const FAILED = ["FAILED", "DECLINED", "VOIDED", "DENIED", "ERROR"];
 
-export function executionTone(status: string | undefined) {
-  const value = (status ?? "").toUpperCase();
-  if (value === "COMPLETED") return "status-allow";
-  if (FAILED.includes(value)) return "status-block";
-  return "";
+export function ExecutionPill({ status }: { status: string }) {
+  const value = status.toUpperCase();
+  const tone = value === "COMPLETED" ? "allow" : FAILED.includes(value) ? "block" : null;
+  return <DecisionBadge decision={tone} label={value.charAt(0) + value.slice(1).toLowerCase()} />;
 }
 
 function Expiry({ expiresAt, nowMs }: { expiresAt: string; nowMs: number }) {
@@ -59,7 +59,7 @@ function Outcome({ card }: { card: ApprovalCard }) {
           <>
             <dt>Execution status</dt>
             <dd>
-              <span className={`status ${executionTone(execution.status)}`}>{execution.status}</span>
+              <ExecutionPill status={execution.status} />
             </dd>
             <dt>PayPal reference</dt>
             <dd>{execution.paypal_ref ? <span className="mono">{execution.paypal_ref}</span> : <span className="muted">None returned</span>}</dd>
@@ -102,7 +102,7 @@ export function ApprovalCardView({ card, nowMs, index, onChange }: { card: Appro
         <div style={{ minWidth: 0 }}>
           <h2 id={titleId}>{name}</h2>
           <p className="muted">
-            Held by rule {card.rule_id} at <span className="num">{clock(card.created_at)}</span>
+            Held by rule <span className="mono">{card.rule_id}</span> at <span className="num">{clock(card.created_at)}</span>
           </p>
         </div>
         <p className="held-amount num">{dollars(card.amount_cents)}</p>
