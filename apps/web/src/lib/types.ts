@@ -99,21 +99,33 @@ export interface PolicyVersion {
 export interface AttackGroup {
   group: string;
   scenarios: number;
+  status: "measured" | "pending";
+  baseline_success: number | null;
+  protected_success: number | null;
+  money_lost_baseline_cents: number | null;
+  money_lost_protected_cents: number | null;
+}
+
+export interface AttackHeadline {
+  attack_scenarios: number;
   baseline_success: number;
   protected_success: number;
   money_lost_baseline_cents: number;
   money_lost_protected_cents: number;
+  includes_group_a: boolean;
 }
 
 export interface AttackReport {
   generated_at: string;
-  model: string;
+  model: string | null;
   trials_per_agent_scenario: number;
   groups: AttackGroup[];
+  headline: AttackHeadline;
   false_block_rate: number;
   escalated_as_designed_rate: number;
   latency_ms: { engine_p50: number; engine_p95: number; proxy_p50: number; proxy_p95: number };
   limitations: { id: string; description: string; outcome: string }[];
+  agent?: { status: "measured" | "pending"; note: string };
 }
 
 export type AgentEvent =
