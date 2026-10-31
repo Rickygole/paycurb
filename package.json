@@ -1,1 +1,10 @@
-{ "name": "paycurb", "private": true, "scripts": { "test": "pnpm -r test" } }
+{
+  "name": "paycurb",
+  "private": true,
+  "scripts": {
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "migrate": "pnpm --filter @paycurb/proxy migrate",
+    "proxy": "pnpm --filter @paycurb/proxy start"
+  }
+}
