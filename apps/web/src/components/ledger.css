@@ -481,6 +481,10 @@
   .ledger {
     --gutter: 16px;
   }
+  .title {
+    font-size: 24px;
+    line-height: 30px;
+  }
   .wide-only {
     display: none !important;
   }
@@ -934,6 +938,7 @@ dialog.drawer[open]::backdrop {
   gap: 24px;
   min-height: 124px;
   padding: 18px 24px;
+  overflow: clip;
 }
 
 .gate-title p {
@@ -1926,8 +1931,11 @@ a.figure:hover .figure-cap {
 .board {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  height: max(520px, calc(100dvh - 250px));
   overflow: hidden;
+}
+
+.board.is-live {
+  height: max(520px, calc(100dvh - 250px));
 }
 
 .lanes {
@@ -2051,7 +2059,7 @@ a.figure:hover .figure-cap {
   .lanes-head > span + span {
     display: none;
   }
-  .board {
+  .board.is-live {
     height: auto;
     min-height: 560px;
   }

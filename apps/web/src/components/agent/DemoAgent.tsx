@@ -125,15 +125,15 @@ export function DemoAgent() {
           {notice.text}
         </p>
       )}
-      <section aria-label="Agent run" className="panel board">
+      <section aria-label="Agent run" className={`panel board${entries.length ? " is-live" : ""}`}>
         <div className="lanes lanes-head">
           <span>Agent</span>
           <span>Paycurb decision</span>
         </div>
         {entries.length === 0 ? (
-          <div style={{ position: "relative", overflow: "hidden" }}>
+          <div>
             <Preview />
-            <p className="muted" style={{ position: "absolute", inset: "auto 20px 20px", textAlign: "center" }}>
+            <p className="muted" style={{ padding: "0 20px 20px", textAlign: "center" }}>
               Pick a task below. What the agent tries appears on the left, and what Paycurb decides on the right.
             </p>
           </div>
