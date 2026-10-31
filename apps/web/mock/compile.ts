@@ -6,10 +6,10 @@ const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 function amountNear(text: string, words: string[]) {
   for (const word of words) {
-    const after = new RegExp(`${word}[^.$]{0,40}\\$\\s?(\\d+(?:\\.\\d{1,2})?)`, "i").exec(text);
-    if (after) return Math.round(Number(after[1]) * 100);
     const before = new RegExp(`\\$\\s?(\\d+(?:\\.\\d{1,2})?)[^.$]{0,30}${word}`, "i").exec(text);
     if (before) return Math.round(Number(before[1]) * 100);
+    const after = new RegExp(`${word}[^.$]{0,40}\\$\\s?(\\d+(?:\\.\\d{1,2})?)`, "i").exec(text);
+    if (after) return Math.round(Number(after[1]) * 100);
   }
   return null;
 }
