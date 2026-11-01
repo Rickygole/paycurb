@@ -10,7 +10,7 @@ import type { ApprovalCard, Outcome } from "@/lib/types";
 import { DecisionBadge } from "../DecisionBadge";
 import { PageHeader } from "../Shell";
 import { EmptyState, ErrorState, Skeleton } from "../states";
-import { ApprovalCardView, ExecutionPill } from "./ApprovalCardView";
+import { ApprovalCardView, DecidedBanner, ExecutionPill } from "./ApprovalCardView";
 
 function useNow() {
   const [now, setNow] = useState(() => Date.now());
@@ -148,7 +148,7 @@ export function Approvals() {
     all.reload();
   }
 
-  const { active, history, waiting, lapsed } = splitApprovals(all.data ?? [], acted, now);
+  const { active, confirming, history, waiting, lapsed } = splitApprovals(all.data ?? [], acted, now);
 
   return (
     <>
@@ -164,6 +164,11 @@ export function Approvals() {
       />
       <div className="split">
         <div className="stack">
+          <div role="status" className="stack confirmations">
+            {confirming.map((card) => (
+              <DecidedBanner key={card.id} card={card} />
+            ))}
+          </div>
           {all.loading && (
             <div role="status" className="stack">
               <span className="sr-only">Loading held orders</span>

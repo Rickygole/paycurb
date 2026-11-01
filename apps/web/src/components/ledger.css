@@ -1338,6 +1338,10 @@ a.figure:hover .figure-cap {
   gap: 16px;
 }
 
+.confirmations:empty {
+  margin-bottom: -16px;
+}
+
 .split > aside {
   position: sticky;
   top: 72px;

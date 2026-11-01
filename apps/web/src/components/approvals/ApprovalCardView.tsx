@@ -41,20 +41,22 @@ function Expiry({ expiresAt, nowMs }: { expiresAt: string; nowMs: number }) {
   );
 }
 
-function Outcome({ card }: { card: ApprovalCard }) {
+export function DecidedBanner({ card }: { card: ApprovalCard }) {
   const execution = card.execution;
   const rejected = card.status === "rejected" || card.status === "expired";
   const value = execution?.status.toUpperCase() ?? "";
   const failed = FAILED.includes(value);
   const tone = failed ? "block" : value === "COMPLETED" ? "allow" : "neutral";
   return (
-    <div className="outcome" role="status">
+    <div className="outcome rise">
       <span key={tone} className="burst" data-tone={tone}>
         {rejected || failed ? <XIcon size={20} strokeWidth={2.5} /> : <CheckIcon size={20} strokeWidth={2.5} />}
       </span>
       <dl>
-        <dt>Request</dt>
-        <dd>{statusWords[card.status] ?? card.status}</dd>
+        <dt>{statusWords[card.status] ?? card.status}</dt>
+        <dd>
+          {merchantName(card.merchant_id, card.merchant_name)} <span className="num">{dollars(card.amount_cents)}</span>
+        </dd>
         {execution ? (
           <>
             <dt>Execution status</dt>
@@ -113,7 +115,6 @@ export function ApprovalCardView({ card, nowMs, index, onChange }: { card: Appro
         <p className="muted">No line items came with this request. Check the merchant and the amount before you approve.</p>
       )}
       <p style={{ fontWeight: 500 }}>{plainReason({ tool: "create_order", decision: "escalate", reason: card.reason })}</p>
-      {card.status !== "pending" && <Outcome card={card} />}
       {error && (
         <p role="alert" className="notice" style={{ color: "var(--block-ink)" }}>
           <AlertIcon size={16} />

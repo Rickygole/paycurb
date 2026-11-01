@@ -19,18 +19,25 @@ const card = (id: string, status: ApprovalCard["status"], created = "2026-11-01T
 });
 
 describe("splitApprovals", () => {
-  it("keeps a just decided card in view for a short confirmation and out of the waiting count", () => {
-    const split = splitApprovals([card("a", "executed"), card("b", "pending")], { a: now - 1000 }, now);
-    expect(split.active.map((item) => item.id)).toEqual(["a", "b"]);
+  it("lists a just decided card at the top of history at once and shows it as a confirmation", () => {
+    const split = splitApprovals([card("old", "rejected", "2026-11-01T11:30:00Z"), card("a", "executed"), card("b", "pending")], { a: now - 1000 }, now);
+    expect(split.history.map((item) => item.id)).toEqual(["a", "old"]);
+    expect(split.history[0].execution).toEqual({ status: "COMPLETED", paypal_ref: "CAP-1" });
+    expect(split.confirming.map((item) => item.id)).toEqual(["a"]);
+    expect(split.active.map((item) => item.id)).toEqual(["b"]);
     expect(split.waiting).toBe(1);
-    expect(split.history).toEqual([]);
   });
 
-  it("moves the decided card into history once the confirmation ends", () => {
-    const split = splitApprovals([card("a", "executed")], { a: now - CONFIRM_MS }, now);
+  it("never lists a decided card as active, so the header count matches what is shown", () => {
+    const split = splitApprovals([card("a", "executed")], { a: now - 1000 }, now);
     expect(split.active).toEqual([]);
-    expect(split.history.map((item) => item.id)).toEqual(["a"]);
     expect(split.waiting).toBe(0);
+  });
+
+  it("ends the confirmation after its time and keeps the card in history", () => {
+    const split = splitApprovals([card("a", "executed")], { a: now - CONFIRM_MS }, now);
+    expect(split.confirming).toEqual([]);
+    expect(split.history.map((item) => item.id)).toEqual(["a"]);
   });
 
   it("lists cards decided elsewhere in history, newest first", () => {
