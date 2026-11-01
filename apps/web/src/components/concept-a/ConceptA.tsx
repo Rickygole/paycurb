@@ -91,7 +91,7 @@ export function Numbers({ report }: { report: LandingReport }) {
         <div className="ca-numbers-in">
           <h2 id="numbers-title">
             <Mark />
-            {head.attack_scenarios} attacks on the PayPal sandbox. {head.protected_success} got paid.
+            {head.attack_scenarios} attacks. {head.protected_success} got paid.
           </h2>
           <dl className="ca-figs">
             <div className="ca-fig ca-fig-lead">
@@ -126,7 +126,7 @@ export function Numbers({ report }: { report: LandingReport }) {
             )}
           </dl>
           <p className="ca-numbers-note">
-            {control && <>All {control.protected_success} of {control.scenarios} ordinary purchases in the same run still went through. </>}
+            All {head.attack_scenarios} ran against the PayPal sandbox. {control && <>All {control.protected_success} of {control.scenarios} ordinary purchases in the same run still went through. </>}
             From <a href={reportLink}>the attack report</a>, generated {generated}. What the suite cannot stop is listed in <a href={threatModel}>the threat model</a>.
           </p>
         </div>
@@ -293,14 +293,14 @@ export function Foot() {
           ))}
         </ul>
       </div>
-      <p className="ca-legal">
+      <div className="ca-legal">
         <span>
           {footer.line} {footer.license}
         </span>
         <a className="ca-sweep" href="#top">
           Back to top
         </a>
-      </p>
+      </div>
     </footer>
   );
 }

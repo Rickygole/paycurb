@@ -17,6 +17,12 @@ const nav = [
   { href: "/policy", label: "Policy" },
   { href: "/audit", label: "Audit" },
   { href: "/attacks", label: "Attacks" },
+  { href: "/agent", label: "Agent" },
+];
+
+const help = [
+  { href: "/docs", label: "Docs" },
+  { href: "/connect", label: "Connect your agent" },
 ];
 
 function PendingPill({ count }: { count: number | null }) {
@@ -64,6 +70,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const [checked, setChecked] = useState(false);
   const pending = usePending(checked);
   const sheet = useRef<HTMLDivElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     api<{ ok: boolean }>("/api/session")
@@ -76,6 +83,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     sheet.current?.hidePopover?.();
+    menu.current?.hidePopover?.();
   }, [pathname]);
 
   async function signOut() {
@@ -102,9 +110,7 @@ export function Shell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="bar-end">
-            <Link href="/agent" className="btn btn-primary btn-sm wide-only" aria-current={isActive("/agent") ? "page" : undefined}>
-              Run the agent
-            </Link>
+            <span className="sandbox-badge wide-only">Sandbox workspace</span>
             <span className="wide-only">
               <ThemeToggle />
             </span>
@@ -123,8 +129,14 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <div id="account-menu" popover="auto" role="menu" aria-label="Account" className="menu">
+      <div id="account-menu" ref={menu} popover="auto" role="menu" aria-label="Account" className="menu">
         <p className="menu-label">Signed in as the owner</p>
+        {help.map(({ href, label }) => (
+          <Link key={href} href={href} role="menuitem" className="menu-item">
+            {label}
+          </Link>
+        ))}
+        <div className="menu-rule" />
         <ThemeToggle variant="row" />
         <div className="menu-rule" />
         <button type="button" role="menuitem" className="menu-item" onClick={signOut}>
@@ -149,9 +161,12 @@ export function Shell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="sheet-actions">
-          <Link href="/agent" className="btn btn-primary">
-            Run the agent
-          </Link>
+          <p className="sandbox-badge">Sandbox workspace</p>
+          {help.map(({ href, label }) => (
+            <Link key={href} href={href} className="menu-item">
+              {label}
+            </Link>
+          ))}
           <ThemeToggle variant="row" />
           <button type="button" className="menu-item" onClick={signOut}>
             <LogOutIcon size={16} />

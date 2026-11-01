@@ -2,7 +2,7 @@ import { dayLabel } from "@/lib/format";
 import { policySummary } from "@/lib/policySummary";
 import type { ActivePolicy, PolicyVersion } from "@/lib/types";
 import { ChevronRightIcon } from "../icons";
-import { ErrorState, Skeleton } from "../states";
+import { EmptyState, ErrorState, Skeleton } from "../states";
 import { ChangeTable } from "./ChangeTable";
 
 export function VersionHistory({ versions, active, error, onRetry }: { versions: PolicyVersion[] | null; active: ActivePolicy | null; error: string | null; onRetry: () => void }) {
@@ -16,7 +16,19 @@ export function VersionHistory({ versions, active, error, onRetry }: { versions:
       </div>
     );
   }
-  if (versions.length === 0) return <div className="empty">No versions yet. Compile and activate your first policy above.</div>;
+  if (versions.length === 0)
+    return (
+      <EmptyState
+        title="No policy versions yet"
+        action={
+          <a href="#rules" className="btn btn-sm">
+            Write your rules
+          </a>
+        }
+      >
+        Write your rules above, read them back, and activate them to create version 1.
+      </EmptyState>
+    );
   return (
     <ul className="panel versions">
       {[...versions]

@@ -32,11 +32,12 @@ export function ErrorState({ title, message, onRetry }: { title: string; message
   );
 }
 
-export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
+export function EmptyState({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="empty">
       <strong>{title}</strong>
       {children && <p style={{ maxWidth: "52ch" }}>{children}</p>}
+      {action && <div className="empty-action">{action}</div>}
     </div>
   );
 }

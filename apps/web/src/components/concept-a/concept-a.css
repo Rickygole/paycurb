@@ -195,15 +195,12 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  width: var(--frame);
-  margin-inline: auto;
   display: flex;
   align-items: center;
   gap: 32px;
   min-height: 64px;
+  padding-inline: max(var(--margin), (100% - 1312px) / 2);
   background: var(--paper);
-  box-shadow: 0 0 0 100vmax var(--paper);
-  clip-path: inset(0 -100vmax);
 }
 
 .ca-home {
@@ -1014,9 +1011,11 @@
   transition: transform 900ms var(--ease) calc(var(--i) * 45ms);
 }
 
-.ca-roll-strip span {
+.ca-roll-strip::before {
+  content: "0\a 1\a 2\a 3\a 4\a 5\a 6\a 7\a 8\a 9";
   display: block;
-  height: 1.1em;
+  white-space: pre;
+  line-height: 1.1em;
 }
 
 .ca-receipts {
@@ -1207,7 +1206,8 @@
 
 @keyframes ca-pop {
   from {
-    transform: scale(0);
+    opacity: 0;
+    transform: scale(0.4);
   }
   60% {
     transform: scale(1.5);
@@ -2187,13 +2187,13 @@ tr:first-child .ca-link-seg {
 
 @media (min-width: 1100px) and (min-height: 700px) {
   .ca-numbers {
-    height: calc(100vh + 40vh);
+    height: calc(100svh + 40svh);
   }
 
   .ca-numbers-pin {
     position: sticky;
     top: 0;
-    min-height: 100vh;
+    min-height: 100svh;
     display: grid;
     align-content: center;
     padding-block: 64px;
@@ -2286,7 +2286,7 @@ tr:first-child .ca-link-seg {
 
   .ca-figs {
     grid-template-columns: 1fr 1fr;
-    row-gap: 48px;
+    row-gap: 88px;
   }
 
   .ca-fig dd {
@@ -2471,7 +2471,7 @@ tr:first-child .ca-link-seg {
 
   .ca-figs {
     grid-template-columns: 1fr;
-    row-gap: 36px;
+    row-gap: 72px;
   }
 
   .ca-ask {

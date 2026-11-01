@@ -111,7 +111,7 @@ export function DemoAgent() {
   return (
     <>
       <PageHeader
-        title="Run the agent"
+        title="Agent"
         description={
           mode.data?.mode === "scripted"
             ? "No model runs on this host, so the steps are a fixed replay. Every Paycurb decision is real and every payment still goes through the policy engine."
@@ -120,7 +120,7 @@ export function DemoAgent() {
         actions={
           <button type="button" className="btn btn-quiet" onClick={reset} disabled={resetting}>
             <RefreshIcon size={15} />
-            {resetting ? "Resetting" : "Reset the demo"}
+            {resetting ? "Resetting" : "Reset the workspace"}
           </button>
         }
       />

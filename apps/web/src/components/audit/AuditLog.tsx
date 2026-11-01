@@ -177,7 +177,7 @@ export function AuditLog() {
           quickFilterText={search}
           includeHiddenColumnsInQuickFilter
           loading={loading && rows.length === 0}
-          overlayNoRowsTemplate="<span>Nothing has been decided yet. Every decision the engine makes is written here as it happens.</span>"
+          overlayNoRowsTemplate='<span>No entries yet. Every decision, approval and policy change is written here as it happens. <a href="/agent">Run an agent task</a> to write the first one.</span>'
           onRowClicked={onRowClicked}
           onCellKeyDown={(event) => {
             const key = (event.event as KeyboardEvent | null)?.key;

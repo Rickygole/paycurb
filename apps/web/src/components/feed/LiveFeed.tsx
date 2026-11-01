@@ -119,8 +119,15 @@ export function LiveFeed() {
         )}
         {list !== null && list.length === 0 && (
           <div className="panel-pad">
-            <EmptyState title="Nothing has tried to buy anything yet">
-              When your agent tries to pay, the decision lands here within a second. <Link href="/agent" className="link-btn">Run the agent</Link> to see one.
+            <EmptyState
+              title="No payment requests yet"
+              action={
+                <Link href="/connect" className="btn btn-sm">
+                  Connect your agent
+                </Link>
+              }
+            >
+              When your agent asks to pay, the decision shows up here within a second, with the rule and the reason.
             </EmptyState>
           </div>
         )}
@@ -133,7 +140,7 @@ export function LiveFeed() {
         )}
         {list !== null && list.length > 0 && list.length < SHOWN && (
           <p className="feed-end muted">
-            Nothing else yet. <Link href="/agent" className="link-btn">Run the agent</Link> to see more decisions.
+            That is everything so far. <Link href="/agent" className="link-btn">Run an agent task</Link> to send another request.
           </p>
         )}
       </section>

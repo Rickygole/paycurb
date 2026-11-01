@@ -1,7 +1,5 @@
 import type { CSSProperties } from "react";
 
-const strip = Array.from({ length: 10 }, (_, digit) => <span key={digit}>{digit}</span>);
-
 export function Roll({ text, scroll = false }: { text: string; scroll?: boolean }) {
   const chars = [...text];
   return (
@@ -12,7 +10,7 @@ export function Roll({ text, scroll = false }: { text: string; scroll?: boolean 
           const place = chars.length - index;
           return /\d/.test(char) ? (
             <span key={place} className="ca-roll-col" style={{ "--d": Number(char), "--i": place } as CSSProperties}>
-              <span className="ca-roll-strip">{strip}</span>
+              <span className="ca-roll-strip" />
             </span>
           ) : (
             <span key={`s${place}`} className="ca-roll-sym">

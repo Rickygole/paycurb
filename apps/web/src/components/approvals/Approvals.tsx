@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import { dollars, merchantName, secondsLeft, stamp } from "@/lib/format";
@@ -60,8 +61,8 @@ function WhatHappens() {
       </h2>
       <ol className="steps" style={{ marginTop: 8 }}>
         <li>Paycurb records your approval for this exact order, matched by its payload hash.</li>
-        <li>Your agent repeats the identical call. A different merchant, item or amount is a new order and is checked again.</li>
-        <li>The proxy sends that call to PayPal. The status PayPal returns and its reference show on the order.</li>
+        <li>The proxy sends the held order to PayPal right away. The status PayPal returns and its reference show on the order.</li>
+        <li>The approval is used once. A different merchant, item or amount is a new order and is checked again.</li>
       </ol>
       <p className="small muted" style={{ marginTop: 8 }}>
         Reject, or let the timer run out, and nothing is paid.
@@ -179,7 +180,16 @@ export function Approvals() {
             </p>
           )}
           {all.data && active.length === 0 && (
-            <EmptyState title="No orders are waiting for you">When the policy holds an order, it lands here with a timer and the exact items.</EmptyState>
+            <EmptyState
+              title="No orders are waiting for you"
+              action={
+                <Link href="/policy" className="btn btn-sm">
+                  Review your approval line
+                </Link>
+              }
+            >
+              When your policy holds an order, it shows up here with the exact items, the amount and a timer.
+            </EmptyState>
           )}
           {active.map((card, index) => (
             <ApprovalCardView key={card.id} card={card} index={index} nowMs={now} onChange={acted} />
