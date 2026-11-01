@@ -390,7 +390,12 @@
   font-family: var(--face);
   font-size: 22px;
   font-weight: 800;
-  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gd-say {
+    opacity: 0;
+  }
 }
 
 .gd-tall .gd-say {
@@ -1693,6 +1698,10 @@
 
   .gd-hold {
     translate: var(--stop);
+  }
+
+  .gd-say {
+    display: none;
   }
 
   .gd-hold rect {
