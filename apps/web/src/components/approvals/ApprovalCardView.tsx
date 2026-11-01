@@ -77,7 +77,19 @@ export function DecidedBanner({ card }: { card: ApprovalCard }) {
   );
 }
 
-export function ApprovalCardView({ card, nowMs, index, onChange }: { card: ApprovalCard; nowMs: number; index: number; onChange: (card: ApprovalCard) => void }) {
+export function ApprovalCardView({
+  card,
+  nowMs,
+  index,
+  onChange,
+  onSending,
+}: {
+  card: ApprovalCard;
+  nowMs: number;
+  index: number;
+  onChange: (card: ApprovalCard) => void;
+  onSending: (id: string, sending: boolean) => void;
+}) {
   const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const expired = secondsLeft(card.expires_at, nowMs) === 0;
@@ -88,6 +100,7 @@ export function ApprovalCardView({ card, nowMs, index, onChange }: { card: Appro
   async function decide(choice: "approve" | "reject") {
     setBusy(choice);
     setError(null);
+    if (choice === "approve") onSending(card.id, true);
     try {
       onChange(await postJson<ApprovalCard>(`/api/approvals/${encodeURIComponent(card.id)}/${choice}`));
       askForStats();
@@ -95,6 +108,7 @@ export function ApprovalCardView({ card, nowMs, index, onChange }: { card: Appro
       setError(errorText(problem));
     } finally {
       setBusy(null);
+      onSending(card.id, false);
     }
   }
 

@@ -72,7 +72,7 @@ function WhatHappens() {
   );
 }
 
-function History({ cards }: { cards: ApprovalCard[] }) {
+function History({ cards, sending }: { cards: ApprovalCard[]; sending: Record<string, number> }) {
   return (
     <section className="panel" aria-labelledby="history-heading" style={{ marginTop: 48 }}>
       <header className="panel-head">
@@ -105,11 +105,27 @@ function History({ cards }: { cards: ApprovalCard[] }) {
                   <td className="n num" data-label="Amount">
                     {dollars(card.amount_cents)}
                   </td>
-                  <td data-label="Request">
-                    <DecisionBadge decision={historyTone[card.status] ?? null} label={historyWords[card.status] ?? card.status} />
-                  </td>
-                  <td data-label="Execution">{card.execution ? <ExecutionPill status={card.execution.status} /> : <span className="missing" role="img" aria-label="None" />}</td>
-                  <td data-label="PayPal reference">{card.execution?.paypal_ref ? <span className="mono">{card.execution.paypal_ref}</span> : <span className="missing" role="img" aria-label="None" />}</td>
+                  {card.id in sending ? (
+                    <>
+                      <td data-label="Request">
+                        <DecisionBadge decision="escalate" label="Executing at PayPal" />
+                      </td>
+                      <td data-label="Execution">
+                        <ExecutionPill status="PENDING" />
+                      </td>
+                      <td data-label="PayPal reference" className="muted">
+                        Waiting for PayPal
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td data-label="Request">
+                        <DecisionBadge decision={historyTone[card.status] ?? null} label={historyWords[card.status] ?? card.status} />
+                      </td>
+                      <td data-label="Execution">{card.execution ? <ExecutionPill status={card.execution.status} /> : <span className="missing" role="img" aria-label="None" />}</td>
+                      <td data-label="PayPal reference">{card.execution?.paypal_ref ? <span className="mono">{card.execution.paypal_ref}</span> : <span className="missing" role="img" aria-label="None" />}</td>
+                    </>
+                  )}
                   <td className="n num muted" data-label="Held at" title={new Date(card.created_at).toLocaleString()}>
                     {stamp(card.created_at)}
                   </td>
@@ -126,6 +142,7 @@ function History({ cards }: { cards: ApprovalCard[] }) {
 export function Approvals() {
   const all = useApi<ApprovalCard[]>("/api/approvals", 3000);
   const [acted, setActed] = useState<Record<string, number>>({});
+  const [sending, setSending] = useState<Record<string, number>>({});
   const now = useNow();
   const setAll = all.setData;
 
@@ -148,20 +165,30 @@ export function Approvals() {
     all.reload();
   }
 
-  const { active, confirming, history, waiting, lapsed } = splitApprovals(all.data ?? [], acted, now);
+  function markSending(id: string, on: boolean) {
+    setSending((current) => {
+      const next = { ...current };
+      if (on) next[id] = Date.now();
+      else delete next[id];
+      return next;
+    });
+  }
+
+  const { active, confirming, history, waiting, lapsed } = splitApprovals(all.data ?? [], acted, now, sending);
+  const paying = Object.keys(sending).length > 0;
+  const settling = paying || confirming.length > 0;
+
+  function headline() {
+    if (!all.data) return "Orders the policy held for you. Nothing is paid until you approve.";
+    if (waiting > 0) return `${waiting} held ${waiting === 1 ? "order is" : "orders are"} waiting. Nothing is paid until you approve.`;
+    if (paying) return "Sending the approved order to PayPal.";
+    if (confirming.length > 0) return "Decided just now. Nothing else is waiting.";
+    return `Nothing is waiting.${lapsed > 0 ? ` ${lapsed} expired unanswered and nothing was paid.` : ""} Orders over your approval line, from a new merchant, or repeats land here.`;
+  }
 
   return (
     <>
-      <PageHeader
-        title="Approvals"
-        description={
-          all.data
-            ? waiting === 0
-              ? `Nothing is waiting.${lapsed > 0 ? ` ${lapsed} expired unanswered and nothing was paid.` : ""} Orders over your approval line, from a new merchant, or repeats land here.`
-              : `${waiting} held ${waiting === 1 ? "order is" : "orders are"} waiting. Nothing is paid until you approve.`
-            : "Orders the policy held for you. Nothing is paid until you approve."
-        }
-      />
+      <PageHeader title="Approvals" description={headline()} />
       <div className="split">
         <div className="stack">
           <div role="status" className="stack confirmations">
@@ -182,7 +209,7 @@ export function Approvals() {
               Updates paused: {all.error}
             </p>
           )}
-          {all.data && active.length === 0 && (
+          {all.data && active.length === 0 && !settling && (
             <EmptyState
               title="No orders are waiting for you"
               action={
@@ -195,9 +222,9 @@ export function Approvals() {
             </EmptyState>
           )}
           {active.map((card, index) => (
-            <ApprovalCardView key={card.id} card={card} index={index} nowMs={now} onChange={decided} />
+            <ApprovalCardView key={card.id} card={card} index={index} nowMs={now} onChange={decided} onSending={markSending} />
           ))}
-          {all.data && <History cards={history} />}
+          {all.data && <History cards={history} sending={sending} />}
         </div>
         <WhatHappens />
       </div>

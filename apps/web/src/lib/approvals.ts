@@ -4,8 +4,8 @@ import type { ApprovalCard } from "./types";
 export const CONFIRM_MS = 4000;
 const HISTORY = 8;
 
-export function splitApprovals(list: ApprovalCard[], acted: Record<string, number>, nowMs: number) {
-  const decidedAt = (card: ApprovalCard) => acted[card.id] ?? 0;
+export function splitApprovals(list: ApprovalCard[], acted: Record<string, number>, nowMs: number, sending: Record<string, number> = {}) {
+  const decidedAt = (card: ApprovalCard) => acted[card.id] ?? sending[card.id] ?? 0;
   const pending = list.filter((card) => card.status === "pending").sort((a, b) => a.expires_at.localeCompare(b.expires_at));
   const decided = list
     .filter((card) => card.status !== "pending")

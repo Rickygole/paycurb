@@ -45,6 +45,12 @@ describe("splitApprovals", () => {
     expect(split.history.map((item) => item.id)).toEqual(["new", "old"]);
   });
 
+  it("lists a card still being sent to PayPal at the top of history without a confirmation", () => {
+    const split = splitApprovals([card("old", "rejected", "2026-11-01T11:30:00Z"), card("a", "executed")], {}, now, { a: now - 1000 });
+    expect(split.history.map((item) => item.id)).toEqual(["a", "old"]);
+    expect(split.confirming).toEqual([]);
+  });
+
   it("counts a pending card past its expiry as lapsed, not waiting", () => {
     const lapsed = { ...card("c", "pending"), expires_at: "2026-11-01T11:59:00Z" };
     expect(splitApprovals([lapsed], {}, now)).toMatchObject({ waiting: 0, lapsed: 1 });
