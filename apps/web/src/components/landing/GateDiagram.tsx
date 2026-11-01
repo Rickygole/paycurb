@@ -22,7 +22,21 @@ function Token({ amount, motion, x, y, wide = false }: { amount: string; motion:
   );
 }
 
-function Wide() {
+type Say = { motion: string; text: string }[];
+
+function Says({ says, x, y }: { says: Say; x: number; y: number }) {
+  return (
+    <>
+      {says.map((say) => (
+        <text key={say.motion} className={`gd-say gd-say-${say.motion}`} x={x} y={y}>
+          {say.text}
+        </text>
+      ))}
+    </>
+  );
+}
+
+function Wide({ says }: { says: Say }) {
   return (
     <svg className="gd gd-wide" viewBox="0 0 1100 220" role="img" aria-label={hero.diagramLabel}>
       <line className="gd-lane" x1="150" y1="110" x2="950" y2="110" />
@@ -37,6 +51,7 @@ function Wide() {
       <text className="gd-p" x="1014" y="126" textAnchor="middle">
         P
       </text>
+      <Says says={says} x={596} y={62} />
       {tokens.map((token) => (
         <Token key={token.id} amount={token.amount} motion={token.motion} x={150} y={88} wide />
       ))}
@@ -44,7 +59,7 @@ function Wide() {
   );
 }
 
-function Tall() {
+function Tall({ says }: { says: Say }) {
   return (
     <svg className="gd gd-tall" viewBox="0 0 320 440" role="img" aria-label={hero.diagramLabel}>
       <line className="gd-lane" x1="160" y1="100" x2="160" y2="350" />
@@ -74,6 +89,7 @@ function Tall() {
       <text className="gd-note" x="216" y="408">
         Sandbox
       </text>
+      <Says says={says} x={210} y={184} />
       {tokens.map((token) => (
         <Token key={token.id} amount={token.amount} motion={token.motion} x={120} y={104} />
       ))}
@@ -87,11 +103,12 @@ export function GateDiagram() {
     const result = scenario ? decide(scenario) : null;
     return { ...token, label: scenario?.label ?? token.id, result };
   });
+  const says = legend.flatMap((item) => (item.result ? [{ motion: item.motion, text: `${words[item.result.decision]} ${item.result.rule_id}` }] : []));
 
   return (
     <figure className="diagram" data-ui>
-      <Wide />
-      <Tall />
+      <Wide says={says} />
+      <Tall says={says} />
       <div className="diagram-captions" aria-hidden="true">
         <p>
           <b>{hero.agent}</b> {hero.agentNote}

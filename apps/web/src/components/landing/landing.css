@@ -349,7 +349,7 @@
 .gd-wide {
   --stop: 286px 0px;
   --pass: 712px 0px;
-  --fall: 240px 120px;
+  --fall: 240px 76px;
   --rest: 180px 56px;
   --bounce: 262px -6px;
   --open: 0px -60px;
@@ -384,6 +384,32 @@
 
 .gd-wide .gd-token text {
   font-size: 22px;
+}
+
+.gd-say {
+  font-family: var(--face);
+  font-size: 22px;
+  font-weight: 800;
+  opacity: 0;
+}
+
+.gd-tall .gd-say {
+  font-size: 16px;
+}
+
+.gd-say-pass {
+  fill: var(--accent);
+  animation: gd-say-pass 7.5s linear infinite;
+}
+
+.gd-say-hold {
+  fill: var(--amber);
+  animation: gd-say-hold 7.5s linear infinite;
+}
+
+.gd-say-stop {
+  fill: var(--red);
+  animation: gd-say-stop 7.5s linear infinite;
 }
 
 .gd-pass {
@@ -1223,6 +1249,51 @@
   }
 }
 
+@keyframes gd-say-pass {
+  0%,
+  14% {
+    opacity: 0;
+  }
+  16%,
+  30% {
+    opacity: 1;
+  }
+  33%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes gd-say-hold {
+  0%,
+  47% {
+    opacity: 0;
+  }
+  49%,
+  63% {
+    opacity: 1;
+  }
+  66%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes gd-say-stop {
+  0%,
+  81% {
+    opacity: 0;
+  }
+  82%,
+  96% {
+    opacity: 1;
+  }
+  99%,
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes gd-hit {
   0%,
   81% {
@@ -1239,7 +1310,10 @@
   86% {
     translate: 0px 0px;
   }
-  90%,
+  88% {
+    fill: var(--red);
+  }
+  92%,
   100% {
     fill: var(--accent);
   }
