@@ -239,6 +239,11 @@
   padding-block: 6px;
 }
 
+.ca-signin,
+.ca-btn-bar {
+  white-space: nowrap;
+}
+
 .ca-ambient {
   position: absolute;
   inset: -28px -28px auto;
@@ -2322,6 +2327,10 @@ tr:first-child .ca-link-seg {
     display: none;
   }
 
+  .ca-bar .ca-menu {
+    display: grid;
+  }
+
   .ca-signin {
     margin-inline-start: auto;
   }
@@ -2356,7 +2365,7 @@ tr:first-child .ca-link-seg {
 
   .ca-bar {
     min-height: 64px;
-    gap: 16px;
+    gap: 12px;
   }
 
   .ca-nav {
@@ -2367,6 +2376,11 @@ tr:first-child .ca-link-seg {
     min-height: 42px;
     padding-inline: 16px;
     font-size: 15px;
+  }
+
+  .ca-bar .ca-menu {
+    width: 42px;
+    height: 42px;
   }
 
   .ca-lede {
@@ -2523,6 +2537,16 @@ tr:first-child .ca-link-seg {
 
   .ca-legal {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 379px) {
+  .ca-bar .ca-signin {
+    display: none;
+  }
+
+  .ca-btn-bar {
+    margin-inline-start: auto;
   }
 }
 

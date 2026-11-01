@@ -1516,9 +1516,31 @@
   }
 }
 
+@media (max-width: 379px) {
+  .bar .bar-signin {
+    display: none;
+  }
+
+  .bar .btn-bar {
+    margin-left: auto;
+  }
+}
+
 @media (max-width: 760px) {
   .bar-links {
     display: none;
+  }
+
+  .bar .bar-menu {
+    display: grid;
+  }
+
+  .bar {
+    gap: var(--s2);
+  }
+
+  .bar .bar-signin {
+    margin-left: auto;
   }
 
   .bar {

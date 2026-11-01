@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "../Logo";
 import { nav } from "./copy";
+import { NavMenu } from "./NavMenu";
 
 export function Header({ heroActions = false }: { heroActions?: boolean }) {
   const [hideDemo, setHideDemo] = useState(heroActions);
@@ -34,6 +35,7 @@ export function Header({ heroActions = false }: { heroActions?: boolean }) {
       <Link className="btn btn-solid btn-bar" href="/login" data-hidden={hideDemo} aria-hidden={hideDemo || undefined} tabIndex={hideDemo ? -1 : undefined}>
         {nav.start}
       </Link>
+      <NavMenu className="bar-menu" links={[...nav.links, { href: "/login", label: nav.signIn }]} />
     </header>
   );
 }

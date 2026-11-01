@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { hashPayload, products } from "@paycurb/shared";
 import { Logo, LogoGlyph } from "../Logo";
+import { NavMenu } from "../landing/NavMenu";
 import { chainRows, decisionWords } from "../landing/chain";
 import { chain, footer, nav, repo, story, threatModel } from "../landing/copy";
 import { dollars, type LandingReport } from "../landing/data";
@@ -47,6 +48,7 @@ export function Bar() {
       <a className="ca-btn ca-btn-ink ca-btn-bar" href="/login" data-magnet>
         {nav.start}
       </a>
+      <NavMenu className="ca-menu" links={[...nav.links.map((link) => ({ ...link, href: local(link.href) })), { href: "/login", label: nav.signIn }]} />
     </header>
   );
 }
