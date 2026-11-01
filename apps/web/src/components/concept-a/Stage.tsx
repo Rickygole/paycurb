@@ -73,7 +73,7 @@ export function Stage({ shelf, seed }: { shelf: { sku: string; name: string; pri
   const touched = useRef(false);
   const docked = useRef(false);
   const rowsRef = useRef<Row[]>(seed);
-  const totals = useRef({ paid: 0, stopped: 0, receipt: 0 });
+  const totals = useRef({ paid: 0, receipt: 0 });
 
   const box = useCallback((node: Element | null | undefined): Box | null => {
     const frame = board.current?.getBoundingClientRect();
@@ -127,6 +127,7 @@ export function Stage({ shelf, seed }: { shelf: { sku: string; name: string; pri
       setSent("");
       setVerdict(null);
       setPassed(false);
+      if (chosen === "without") setStopped(0);
       setCheck(-1);
       setRead(-1);
       setPhase("reading");
@@ -203,8 +204,7 @@ export function Stage({ shelf, seed }: { shelf: { sku: string; name: string; pri
         setVerdict({ rule: decision.rule_id, reason: plain(decision.reason) });
         setPhase("stopped");
         setStatus(`Blocked by rule ${decision.rule_id}: ${plain(decision.reason)}. Nothing reached PayPal.`);
-        totals.current.stopped += amount;
-        setStopped(totals.current.stopped);
+        setStopped(amount);
         await append("Chronos X watch", decision, amount, merchant);
         if (!still()) return false;
         await pause(1600);
@@ -338,6 +338,7 @@ export function Stage({ shelf, seed }: { shelf: { sku: string; name: string; pri
     setCheck(-1);
     setVerdict(null);
     setPassed(false);
+    setStopped(0);
     setStatus(ready[next]);
   }
 
