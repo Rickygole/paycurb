@@ -94,6 +94,42 @@ function LampRow() {
   );
 }
 
+function Phone({ inline = false }: { inline?: boolean }) {
+  return (
+    <div className={`cb-phone-wrap${inline ? " cb-phone-inline" : ""}`}>
+        <div className="cb-phone" data-ui>
+          <div className="cb-phone-top">
+            <span className="cb-fig">9:41</span>
+            <span className="cb-notch" />
+          </div>
+          <p className="cb-phone-app">
+            <GateMark size={14} />
+            Paycurb asks you
+          </p>
+          <div className="cb-ask">
+            <p className="cb-ask-amt cb-fig">{story.lamp.amount}</p>
+            <p className="cb-ask-what">Desk lamp at {story.lamp.merchant}</p>
+            <p className="cb-ask-why">
+              Held by {lampDecision.rule_id}. {story.lamp.reason}.
+            </p>
+            <p className="cb-ask-bind">Your yes is bound to this exact order. A changed total is refused.</p>
+          </div>
+          <div className="cb-ask-actions">
+            <span className="cb-reject">Reject</span>
+            <span className="cb-approve">
+              Approve
+              <span className="cb-tap" />
+            </span>
+          </div>
+          <div className="cb-approved">
+            <CheckIcon size={18} />
+            Approved. Paycurb is paying PayPal now.
+          </div>
+        </div>
+      </div>
+  );
+}
+
 const linkTop = (index: number) => 19 + index * 38;
 
 export function HeroWindow() {
@@ -196,6 +232,7 @@ export function HeroWindow() {
                 </ol>
               </div>
             </section>
+            <Phone inline />
             <section className="cb-panel cb-chain">
               <header className="cb-panel-head">
                 <b>Audit chain</b>
@@ -239,37 +276,7 @@ export function HeroWindow() {
           </svg>
         </span>
       </div>
-      <div className="cb-phone-wrap">
-        <div className="cb-phone" data-ui>
-          <div className="cb-phone-top">
-            <span className="cb-fig">9:41</span>
-            <span className="cb-notch" />
-          </div>
-          <p className="cb-phone-app">
-            <GateMark size={14} />
-            Paycurb asks you
-          </p>
-          <div className="cb-ask">
-            <p className="cb-ask-amt cb-fig">{story.lamp.amount}</p>
-            <p className="cb-ask-what">Desk lamp at {story.lamp.merchant}</p>
-            <p className="cb-ask-why">
-              Held by {lampDecision.rule_id}. {story.lamp.reason}.
-            </p>
-            <p className="cb-ask-bind">Your yes is bound to this exact order. A changed total is refused.</p>
-          </div>
-          <div className="cb-ask-actions">
-            <span className="cb-reject">Reject</span>
-            <span className="cb-approve">
-              Approve
-              <span className="cb-tap" />
-            </span>
-          </div>
-          <div className="cb-approved">
-            <CheckIcon size={18} />
-            Approved. Paycurb is paying PayPal now.
-          </div>
-        </div>
-      </div>
+      <Phone />
     </div>
   );
 }

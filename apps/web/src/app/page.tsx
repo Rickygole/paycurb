@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ConceptA } from "@/components/concept-a/ConceptA";
+import { Home as Landing } from "@/components/home/Home";
 import { meta } from "@/components/landing/copy";
 
 export const metadata: Metadata = {
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <ConceptA />;
+  return <Landing />;
 }

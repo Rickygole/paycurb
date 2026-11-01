@@ -1,0 +1,155 @@
+:root:has(.home) {
+  color-scheme: light;
+  background: #f3f5f2;
+  scroll-padding-top: 80px;
+}
+
+.home {
+  --gutter: var(--margin);
+  --line: #e1e7e1;
+  font-size: 17px;
+}
+
+.home .cb-col {
+  width: var(--frame);
+}
+
+.home .cb-skip {
+  z-index: 60;
+}
+
+.home .cb-hero {
+  padding-top: clamp(16px, 2vw, 28px);
+}
+
+.home .cb-hero h1 {
+  font-size: clamp(44px, 4.8vw, 70px);
+}
+
+.home .cb-hero-copy {
+  align-items: center;
+}
+
+.home .cb-actions {
+  margin-top: 20px;
+}
+
+.home .cb-story {
+  margin-top: clamp(20px, 2vw, 28px);
+}
+
+.home .cb-chrome {
+  height: 32px;
+}
+
+.home .cb-app-top {
+  height: 46px;
+}
+
+.home .cb-beats {
+  margin-top: 22px;
+}
+
+@media (min-width: 761px) {
+  .home .cb-gate {
+    height: 88px;
+  }
+}
+
+.home .cb-story[data-playing="false"] *,
+.home .cb-story[data-playing="false"] *::before,
+.home .cb-story[data-playing="false"] *::after {
+  animation-play-state: paused !important;
+}
+
+.home .cb-section {
+  padding-block: clamp(88px, 10vw, 150px);
+}
+
+.home .cb-head h2 .ca-hmark,
+.home .cb-end h2 .ca-hmark {
+  font-size: inherit;
+}
+
+.home .cb-end .ca-hmark,
+.home .cb-connect .ca-hmark {
+  color: #7fd3a0;
+}
+
+.home .cb-vs td[data-tone="yes"]::before {
+  display: none;
+}
+
+.home .ca-check {
+  position: absolute;
+  top: 21px;
+  left: 20px;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.home .ca-check path {
+  stroke-dasharray: 1;
+}
+
+.home .cb-end-in {
+  align-items: center;
+}
+
+.home .cb-end-copy {
+  display: grid;
+  gap: 24px;
+  justify-items: start;
+}
+
+.home .cb-phone-inline {
+  display: none;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .home .cb-vs tbody tr,
+    .home .cb-groups tbody tr {
+      animation: ca-row-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+
+    .home .ca-check path {
+      animation: ca-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 70% cover 40%;
+    }
+
+    .home .ca-ambient {
+      animation-timeline: auto;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .home .cb-stage > .cb-phone-wrap {
+    display: none;
+  }
+
+  .home .cb-phone-inline {
+    display: block;
+    position: static;
+    width: 250px;
+    margin: 4px auto 8px;
+    opacity: 1;
+    animation: none !important;
+  }
+
+  .home .ca-check {
+    position: static;
+    display: inline-block;
+    vertical-align: -4px;
+    margin-right: 6px;
+  }
+}

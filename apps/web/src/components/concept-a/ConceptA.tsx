@@ -1,215 +1,306 @@
-import { products } from "@paycurb/shared";
-import { chainRows } from "../landing/chain";
-import { dollars, loadReport, type LandingReport } from "../landing/data";
-import { OpenDemo } from "../landing/OpenDemo";
-import { Count } from "./Count";
+import type { CSSProperties } from "react";
+import { hashPayload, products } from "@paycurb/shared";
+import { Logo, LogoGlyph } from "../Logo";
+import { chainRows, decisionWords } from "../landing/chain";
+import { chain, footer, nav, repo, story, threatModel } from "../landing/copy";
+import { dollars, type LandingReport } from "../landing/data";
+import { decide, scenarios } from "../landing/scenarios";
+import { Roll } from "./Roll";
 import { Scenarios } from "./Scenarios";
 import { Stage, type SeedRow } from "./Stage";
 import "./concept-a.css";
 
-type Report = LandingReport & { latency_ms?: { proxy_p50: number } };
+const reportLink = `${repo}/blob/main/reports/attack-report.md`;
 
-const repo = "https://github.com/Rickygole/paycurb";
-const threatModel = `${repo}/blob/main/docs/threat-model.md`;
+const watchPayload = {
+  tool: "create_order",
+  args: { currencyCode: "USD", payee: "luxury-watches@merchants.example", items: [{ sku: "WATCH-1", name: "Chronos X", quantity: 1, itemCost: 400, itemTotal: 400 }] },
+};
 
-const snippet = `{
-  "mcpServers": {
-    "paypal": {
-      "url": "http://localhost:4000/mcp",
-      "headers": { "x-agent-id": "office-buyer" }
-    }
-  }
-}`;
+const ratio = (part: number, whole: number) => ({ "--r": whole > 0 ? part / whole : 0 }) as CSSProperties;
+const local = (href: string) => href.replace(/^\/#/, "#");
 
-const compare = [
-  { need: "The agent holds something it can spend with", card: "Yes, a card number it can paste anywhere", curb: "No. It can only ask, and Paycurb holds the PayPal keys" },
-  { need: "Checks the merchant before money moves", card: "Some issuers lock a card to one merchant", curb: "Allowlist and blocklist on every call" },
-  { need: "Checks what is in the order", card: "Sees an amount and a merchant name", curb: "Items, quantities and totals must add up" },
-  { need: "Waits for you on a big order", card: "Approves or declines on the spot", curb: "Holds it until you tap approve" },
-  { need: "Stops an approved order being changed", card: "No, any amount under the cap goes", curb: "The approval is bound to the exact payload" },
-  { need: "Tells you why it said no", card: "A decline code, later", curb: "A plain sentence and the rule that fired" },
-  { need: "A record nobody can quietly edit", card: "A statement after it settles", curb: "Hash chained log, every block included" },
-];
-
-export function ConceptA() {
-  const report = loadReport() as Report | null;
-  const head = report?.headline;
-  const control = report?.groups.find((group) => group.group === "H");
-  const latency = report?.latency_ms?.proxy_p50;
-  const shelf = products.filter((item) => item.merchant_id === "acme-office").map((item) => ({ sku: item.id, name: item.name, price: dollars(item.price_cents) }));
-  const seed: SeedRow[] = chainRows.slice(-2).map((row) => ({ seq: row.seq, what: row.what, decision: row.decision, rule: row.rule, entry: row.entry, prev: row.prev }));
-
+export function Mark() {
   return (
-    <div className="ca" id="top">
-      <header className="ca-bar">
-        <a className="ca-mark" href="#top" aria-label="Paycurb, back to the top">
-          paycurb
-        </a>
-        <nav aria-label="Page" className="ca-nav">
-          <a href="#numbers">The numbers</a>
-          <a href="#compare">Virtual cards</a>
-          <a href="#connect">Connect</a>
-        </nav>
-        <a className="ca-btn ca-btn-ink ca-btn-bar" href="#connect">
-          Open the live demo
-        </a>
-      </header>
+    <span className="ca-hmark" aria-hidden="true">
+      <LogoGlyph size={20} />
+    </span>
+  );
+}
 
-      <main>
-        <section className="ca-hero" aria-labelledby="hero-title">
-          <div className="ca-hero-head">
-            <h1 id="hero-title">
-              <span className="ca-rise">Hijack the agent.</span> <span className="ca-rise ca-rise-b">Keep the money.</span>
-            </h1>
-            <p className="ca-lede">Paycurb is a payment firewall between an AI shopping agent and PayPal. The store page below has a $400 order hidden in a review. Send the agent in and see what reaches PayPal.</p>
-          </div>
-          <Stage shelf={shelf} seed={seed} />
-        </section>
+export function Bar() {
+  return (
+    <header className="ca-bar">
+      <a className="ca-home" href="#top" aria-label="Paycurb, back to the top">
+        <Logo size={24} />
+      </a>
+      <nav aria-label="Page" className="ca-nav">
+        {nav.links.map((link) => (
+          <a key={link.href} className="ca-sweep" href={local(link.href)}>
+            {link.label}
+          </a>
+        ))}
+      </nav>
+      <a className="ca-btn ca-btn-ink ca-btn-bar" href="#open" data-magnet>
+        Open the live demo
+      </a>
+    </header>
+  );
+}
 
-        <section className="ca-days" aria-labelledby="days-title">
-          <div className="ca-days-head">
-            <h2 id="days-title">Most calls are not attacks.</h2>
-            <p>The same rules let the small stuff through, wait for you on the bigger stuff, and refuse an order that changed after you said yes. Each one below runs the real engine in your browser.</p>
-          </div>
-          <Scenarios />
-        </section>
+export function Play() {
+  const shelf = products.filter((item) => item.merchant_id === "acme-office").map((item) => ({ sku: item.id, name: item.name, price: dollars(item.price_cents) }));
+  const seed: SeedRow[] = chainRows.slice(-3).map((row) => ({ seq: row.seq, what: row.what, decision: row.decision, rule: row.rule, entry: row.entry, prev: row.prev }));
+  return (
+    <section id="try" className="ca-hero" aria-labelledby="try-title">
+      <div className="ca-hero-head">
+        <h2 id="try-title">
+          <Mark />
+          Hijack the agent yourself.
+        </h2>
+        <p className="ca-lede">The store page below hides a $400 order in a review. Send the agent in, then switch Paycurb off and send it again.</p>
+      </div>
+      <Stage shelf={shelf} seed={seed} />
+    </section>
+  );
+}
 
-        {head && (
-          <section id="numbers" className="ca-numbers" aria-labelledby="numbers-title">
-            <div className="ca-numbers-in">
-              <h2 id="numbers-title">
-                {head.attack_scenarios} attacks on the PayPal sandbox. {head.protected_success} got paid.
-              </h2>
-              <dl className="ca-figs">
-                <div className="ca-fig ca-fig-lead">
-                  <dt>Moved money with Paycurb in the way</dt>
-                  <dd>
-                    <Count value={head.protected_success} /> <span className="ca-of">of {head.attack_scenarios}</span>
-                  </dd>
-                </div>
-                <div className="ca-fig ca-fig-bad">
-                  <dt>Moved money paying PayPal directly</dt>
-                  <dd>
-                    <Count value={head.baseline_success} /> <span className="ca-of">of {head.attack_scenarios}</span>
-                  </dd>
-                </div>
-                <div className="ca-fig ca-fig-bad">
-                  <dt>Lost by those {head.baseline_success} attacks</dt>
-                  <dd>
-                    <Count value={head.money_lost_baseline_cents / 100} decimals={2} prefix="$" />
-                  </dd>
-                </div>
-                {latency !== undefined && (
-                  <div className="ca-fig">
-                    <dt>Median time the proxy adds to a call</dt>
-                    <dd>
-                      <Count value={latency} decimals={2} /> <span className="ca-of">ms</span>
-                    </dd>
-                  </div>
-                )}
-              </dl>
-              <p className="ca-numbers-note">
-                {control && (
-                  <>
-                    All {control.protected_success} of {control.scenarios} ordinary purchases in the same run still went through.{" "}
-                  </>
-                )}
-                Numbers come straight from <a href={`${repo}/blob/main/reports/attack-report.md`}>the attack report</a>, regenerated with one command. What the suite cannot stop is listed in <a href={threatModel}>the threat model</a>.
-              </p>
+export function Days() {
+  return (
+    <section className="ca-days" aria-labelledby="days-title">
+      <div className="ca-days-head">
+        <h2 id="days-title">
+          <Mark />
+          Most calls are not attacks.
+        </h2>
+        <p>The same rules let the small stuff through, wait for you on the bigger stuff, and refuse an order that changed after you said yes. Each one below runs the real engine in your browser.</p>
+      </div>
+      <Scenarios />
+    </section>
+  );
+}
+
+export function Numbers({ report }: { report: LandingReport }) {
+  const head = report.headline;
+  const control = report.groups.find((group) => group.group === "H");
+  const latency = report.latency_ms?.proxy_p50;
+  const generated = new Date(report.generated_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+  return (
+    <section id="numbers" className="ca-numbers" aria-labelledby="numbers-title">
+      <div className="ca-numbers-pin">
+        <div className="ca-numbers-in">
+          <h2 id="numbers-title">
+            <Mark />
+            {head.attack_scenarios} attacks on the PayPal sandbox. {head.protected_success} got paid.
+          </h2>
+          <dl className="ca-figs">
+            <div className="ca-fig ca-fig-lead">
+              <dt>Moved money with Paycurb in the way</dt>
+              <dd>
+                <span className="ca-fig-bar" style={ratio(head.protected_success, head.attack_scenarios)} aria-hidden="true" />
+                <Roll text={String(head.protected_success)} scroll /> <span className="ca-of">of {head.attack_scenarios}</span>
+              </dd>
             </div>
-          </section>
-        )}
-
-        <section className="ca-how" aria-labelledby="how-title">
-          <h2 id="how-title">Three hops, one place to say no.</h2>
-          <ol className="ca-hops">
-            <li className="ca-hop">
-              <h3>The agent asks.</h3>
-              <p>It calls create_order with a payee, items and a total. It never sees a PayPal credential.</p>
-              <code>create_order(payee, items)</code>
-            </li>
-            <li className="ca-hop ca-hop-gate">
-              <h3>Paycurb decides.</h3>
-              <p>Sixteen fixed rules run in order. No model is asked. The first rule that objects wins and says why.</p>
-              <code>evaluate(action, policy, state)</code>
-            </li>
-            <li className="ca-hop">
-              <h3>PayPal pays, only if allowed.</h3>
-              <p>Allowed calls go to PayPal Orders v2. Held calls wait for you. Blocked calls never leave.</p>
-              <code>0F4626979R705464G</code>
-            </li>
-          </ol>
-        </section>
-
-        <section id="compare" className="ca-compare" aria-labelledby="compare-title">
-          <div className="ca-compare-head">
-            <h2 id="compare-title">Why not a virtual card?</h2>
-            <p>A capped card limits the damage to the cap. It cannot tell a desk lamp from a watch, and the agent still holds the card number.</p>
-          </div>
-          <div className="ca-table">
-            <table>
-              <caption className="ca-hidden">What a virtual card checks compared with Paycurb</caption>
-              <thead>
-                <tr>
-                  <th scope="col">What you need</th>
-                  <th scope="col">Virtual card</th>
-                  <th scope="col">Paycurb</th>
-                </tr>
-              </thead>
-              <tbody>
-                {compare.map((row) => (
-                  <tr key={row.need}>
-                    <th scope="row">{row.need}</th>
-                    <td data-label="Virtual card">{row.card}</td>
-                    <td className="ca-curb" data-label="Paycurb">{row.curb}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="connect" className="ca-connect" aria-labelledby="connect-title">
-          <div className="ca-connect-copy">
-            <h2 id="connect-title">Swap one URL.</h2>
-            <p>Paycurb speaks MCP with the same tool names as the PayPal agent toolkit: create_order, get_order and create_refund. Point your agent at the proxy instead of PayPal and it works unchanged.</p>
-            <pre className="ca-code">
-              <code>{snippet}</code>
-            </pre>
-          </div>
-          <div className="ca-connect-demo">
-            <OpenDemo />
-          </div>
-        </section>
-      </main>
-
-      <footer className="ca-foot">
-        <div className="ca-foot-top">
-          <p className="ca-mark">paycurb</p>
-          <p className="ca-foot-line">Give an AI agent a budget, not a credit card.</p>
-          <ul>
-            <li>
-              <a href={repo}>GitHub repository</a>
-            </li>
-            <li>
-              <a href={threatModel}>Threat model</a>
-            </li>
-            <li>
-              <a href={`${repo}/blob/main/reports/attack-report.md`}>Attack report</a>
-            </li>
-            <li>
-              <a href={`${repo}/blob/main/docs/architecture.md`}>Architecture</a>
-            </li>
-            <li>
-              <a href="/login">Sign in</a>
-            </li>
-          </ul>
+            <div className="ca-fig ca-fig-bad">
+              <dt>Moved money paying PayPal directly</dt>
+              <dd>
+                <span className="ca-fig-bar" style={ratio(head.baseline_success, head.attack_scenarios)} aria-hidden="true" />
+                <Roll text={String(head.baseline_success)} scroll /> <span className="ca-of">of {head.attack_scenarios}</span>
+              </dd>
+            </div>
+            <div className="ca-fig ca-fig-bad">
+              <dt>Lost by those {head.baseline_success} attacks</dt>
+              <dd>
+                <span className="ca-fig-bar" style={ratio(1, 1)} aria-hidden="true" />
+                <Roll text={dollars(head.money_lost_baseline_cents)} scroll />
+              </dd>
+            </div>
+            {latency !== undefined && (
+              <div className="ca-fig">
+                <dt>Median time the proxy adds to a call, not counting PayPal</dt>
+                <dd>
+                  <span className="ca-fig-bar" style={ratio(1, 1)} aria-hidden="true" />
+                  <Roll text={latency.toFixed(2)} scroll /> <span className="ca-of">ms</span>
+                </dd>
+              </div>
+            )}
+          </dl>
+          <p className="ca-numbers-note">
+            {control && <>All {control.protected_success} of {control.scenarios} ordinary purchases in the same run still went through. </>}
+            From <a href={reportLink}>the attack report</a>, generated {generated}. What the suite cannot stop is listed in <a href={threatModel}>the threat model</a>.
+          </p>
         </div>
-        <p className="ca-legal">
-          <span>MIT license. PayPal sandbox only, no real money moves.</span>
-          <a href="#top">Back to top</a>
+      </div>
+    </section>
+  );
+}
+
+export function Watch({ report }: { report: LandingReport | null }) {
+  const injected = report?.groups.find((group) => group.group === "A");
+  const watch = scenarios.find((item) => item.id === "watch");
+  const watchDecision = watch ? decide(watch) : null;
+  const watchRow = chainRows.find((row) => row.what === "Chronos X watch");
+  if (!watchRow || !watchDecision) return null;
+  return (
+    <section className="ca-ask-band" aria-labelledby="ask-title">
+      <div className="ca-ask-copy">
+        <h2 id="ask-title">
+          <Mark />
+          {story.punch}
+        </h2>
+        <p className="ca-ask-lead">{story.title}</p>
+        <p>{story.body}</p>
+      </div>
+      <article className="ca-ask" data-ui aria-label={story.cardTitle}>
+        <p className="ca-ask-title">{story.cardTitle}</p>
+        <div className="ca-ask-item">
+          <span className="ca-ask-thumb" aria-hidden="true" />
+          <div>
+            <b>{watchRow.what}</b>
+            <span>
+              {watchRow.merchant}, {watch?.action.merchant_id}
+            </span>
+          </div>
+          <span className="num ca-ask-amt">{watchRow.amount}</span>
+        </div>
+        <div className="ca-ask-verdict">
+          <span className={`ca-pill ca-pill-${watchRow.decision}`}>
+            {decisionWords[watchRow.decision]} {watchRow.rule}
+          </span>
+          <strong>{story.verdict}</strong>
+        </div>
+        <p className="ca-ask-reason">{watchDecision.reason}</p>
+        <p className="ca-ask-facts">
+          <span>
+            {story.entry} <code>{watchRow.entry}</code> {story.follows} <code>{watchRow.prev}</code>
+          </span>
+          <span>
+            Fingerprint <code>{hashPayload(watchPayload).slice(0, 10)}</code>
+          </span>
         </p>
-      </footer>
-    </div>
+        {injected && (
+          <p className="ca-ask-facts">
+            Hidden instructions on web pages: {injected.baseline_success} of {injected.scenarios} paid direct, {injected.protected_success} of {injected.scenarios} with Paycurb.
+          </p>
+        )}
+        <details className="ca-raw">
+          <summary>{story.raw}</summary>
+          <div className="ca-raw-grid">
+            <div>
+              <p>{story.request}</p>
+              <pre>
+                <code>{JSON.stringify(watchPayload, null, 2)}</code>
+              </pre>
+            </div>
+            <div>
+              <p>{story.response}</p>
+              <pre>
+                <code>{JSON.stringify(watchDecision, null, 2)}</code>
+              </pre>
+            </div>
+          </div>
+        </details>
+      </article>
+    </section>
+  );
+}
+
+export function Replay() {
+  return (
+    <section id="chain" className="ca-chain" aria-labelledby="chain-title">
+      <div className="ca-compare-head">
+        <h2 id="chain-title">
+          <Mark />
+          {chain.title}
+        </h2>
+        <p>{chain.body}</p>
+      </div>
+      <div className="ca-sheet" data-ui>
+        <p className="ca-sheet-badge">
+          <span>{chain.replay}</span>
+          <b>{chain.badge}</b>
+        </p>
+        <table>
+          <caption className="ca-hidden">Replay of audit log entries, each with the fingerprint of the previous entry</caption>
+          <thead>
+            <tr>
+              <th scope="col" className="num">
+                {chain.heads[0]}
+              </th>
+              <th scope="col" className="ca-wide">
+                {chain.heads[1]}
+              </th>
+              <th scope="col">{chain.heads[2]}</th>
+              <th scope="col" className="num ca-wide">
+                {chain.heads[3]}
+              </th>
+              <th scope="col">{chain.heads[4]}</th>
+              <th scope="col" className="ca-links">
+                {chain.heads[5]}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {chainRows.slice(0, 5).map((row, position) => (
+              <tr key={row.seq} style={{ "--i": position } as CSSProperties}>
+                <td className="num">{row.seq}</td>
+                <td className="num ca-wide">{row.time}</td>
+                <td>
+                  <span className="ca-sheet-what">{row.what}</span>
+                  <span className="ca-sheet-merchant">{row.merchant}</span>
+                </td>
+                <td className="num ca-wide">{row.amount}</td>
+                <td>
+                  <span className={`ca-pill ca-pill-${row.decision}`}>
+                    {decisionWords[row.decision]} {row.rule}
+                  </span>
+                </td>
+                <td className="ca-links">
+                  <span className="ca-link-seg" aria-hidden="true" />
+                  <span className="ca-link-node" aria-hidden="true" />
+                  <code>{row.entry}</code>
+                  <span className="ca-link-prev">
+                    follows <code>{row.prev}</code>
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="ca-chain-foot">
+        <a className="ca-sweep ca-strong" href="/audit">
+          {chain.link}
+        </a>
+      </p>
+    </section>
+  );
+}
+
+export function Foot() {
+  return (
+    <footer className="ca-foot">
+      <div className="ca-foot-top">
+        <Logo size={24} />
+        <p className="ca-foot-line">Give an AI agent a budget, not a credit card.</p>
+        <ul>
+          {footer.columns.flat().map((link) => (
+            <li key={link.href}>
+              <a className="ca-sweep" href={local(link.href)}>
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="ca-legal">
+        <span>
+          {footer.line} {footer.license}
+        </span>
+        <a className="ca-sweep" href="#top">
+          Back to top
+        </a>
+      </p>
+    </footer>
   );
 }
