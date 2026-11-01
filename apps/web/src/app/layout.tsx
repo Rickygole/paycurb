@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Paycurb", template: "%s | Paycurb" },
-  description: "Payment firewall dashboard for AI shopping agents",
+  description: "Guardrails for AI agents that pay through PayPal",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

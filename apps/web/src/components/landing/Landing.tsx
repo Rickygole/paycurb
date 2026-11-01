@@ -1,169 +1,231 @@
 import { hashPayload } from "@paycurb/shared";
 import { chainRows, decisionWords } from "./chain";
-import { Gate } from "./Gate";
+import { card, chain, cta, evidence, hero, stops, story, threatModel } from "./copy";
+import { Footer } from "./Footer";
+import { GateDiagram } from "./GateDiagram";
 import { Header } from "./Header";
 import { OpenDemo } from "./OpenDemo";
 import { Picker } from "./Picker";
 import { Reveal } from "./Reveal";
-import { Tick } from "./Tick";
 import { dollars, loadReport } from "./data";
 import { decide, scenarios } from "./scenarios";
 import "./landing.css";
 
-const lampPayload = {
+const watchPayload = {
   tool: "create_order",
-  args: { currencyCode: "USD", payee: "acme-office@merchants.example", items: [{ sku: "LAMP-1", name: "Desk lamp", quantity: 1, itemCost: 75, itemTotal: 75 }] },
+  args: { currencyCode: "USD", payee: "luxury-watches@merchants.example", items: [{ sku: "WATCH-1", name: "Chronos X", quantity: 1, itemCost: 400, itemTotal: 400 }] },
 };
 
-const groupNames: Record<string, string> = {
-  A: "Prompt injection through page content",
-  B: "Split purchases and velocity",
-  C: "Approval tampering and replay",
-  D: "Numeric and currency tricks",
-  E: "Refund and payout abuse",
-  F: "Malformed calls and unknown tools",
-  G: "Retries and duplicate orders",
-};
-
-const repo = "https://github.com/Rickygole/paycurb";
-const threatModel = `${repo}/blob/main/docs/threat-model.md`;
+const reportLink = "https://github.com/Rickygole/paycurb/blob/main/reports/attack-report.md";
 
 export function Landing() {
   const report = loadReport();
   const head = report?.headline;
-  const attacks = report?.groups.filter((group) => groupNames[group.group]) ?? [];
+  const attacks = report?.groups.filter((group) => stops.groups[group.group]) ?? [];
   const control = report?.groups.find((group) => group.group === "H");
-  const hash = hashPayload(lampPayload).slice(0, 10);
-  const lamp = scenarios.find((item) => item.id === "lamp");
-  const lampDecision = lamp ? decide(lamp) : null;
+  const injected = report?.groups.find((group) => group.group === "A");
+  const watch = scenarios.find((item) => item.id === "watch");
+  const watchDecision = watch ? decide(watch) : null;
+  const watchRow = chainRows.find((row) => row.what === "Chronos X watch");
+  const shown = chainRows.slice(0, 5);
+  const hash = hashPayload(watchPayload).slice(0, 10);
 
   return (
     <div className="site" id="top">
       <script dangerouslySetInnerHTML={{ __html: 'document.documentElement.classList.add("js")' }} />
-      <Header threatModel={threatModel} />
+      <Header heroActions />
       <main>
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
             <h1 id="hero-title" className="statement">
-              <span className="line">
-                <span>A payment firewall</span>
-              </span>
-              <span className="line line-b">
-                <span>for AI agents.</span>
-              </span>
+              {hero.lines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
             </h1>
             <div className="hero-side">
-              <p className="support">Paycurb sits between an untrusted agent and PayPal. Deterministic rules allow, hold or block every payment call before PayPal sees it, so a hijacked agent can only spend what you allow.</p>
-              <div className="actions">
-                <a className="btn btn-solid" href="#open">
-                  Open the live demo
-                </a>
-                <a className="btn btn-quiet" href={threatModel}>
-                  Read the threat model
+              <p className="support">{hero.support}</p>
+              <p className="dev-line">{hero.developer}</p>
+              <div className="actions" id="hero-actions">
+                <div className="pair">
+                  <a className="btn btn-solid" href="#open">
+                    {hero.primary}
+                  </a>
+                  <a className="btn btn-quiet" href="/connect">
+                    {hero.secondary}
+                  </a>
+                </div>
+                <a className="text-link" href={threatModel}>
+                  {hero.threatLink}
                 </a>
               </div>
             </div>
           </div>
-          <div className="hero-gate">
-            <Gate />
-          </div>
+          <GateDiagram />
         </section>
 
-        <section id="how" className="band how" aria-labelledby="how-title">
-          <Reveal className="band-head">
-            <h2 id="how-title">How a payment gets through</h2>
-            <p>The agent never holds PayPal credentials. It can only ask, and every ask goes through the same engine.</p>
-          </Reveal>
-          <ol className="steps">
-            <Reveal as="li" className="step" delay={0}>
-              <h3>The agent proposes.</h3>
-              <p>A tool call arrives with the merchant, items and total it wants to pay.</p>
-              <pre className="panel" data-ui>
-                <code>{JSON.stringify(lampPayload, null, 2)}</code>
-              </pre>
-            </Reveal>
-            <Reveal as="li" className="step" delay={90}>
-              <h3>Paycurb decides.</h3>
-              <p>Sixteen deterministic rules, R00 to R15, run in order. No model is asked. Approvals bind to fingerprint {hash}.</p>
-              {lampDecision && (
-                <pre className="panel" data-ui>
-                  <code>{JSON.stringify(lampDecision, null, 2)}</code>
-                </pre>
+        {head && (
+          <section className="evidence" aria-labelledby="evidence-title">
+            <h2 id="evidence-title" className="visually-hidden">
+              {evidence.label}
+            </h2>
+            <ul>
+              <li>
+                <span className="stat num">
+                  {head.protected_success} <small>of {head.attack_scenarios}</small>
+                </span>
+                <span>{evidence.protectedLabel}</span>
+              </li>
+              <li>
+                <span className="stat num">
+                  {head.baseline_success} <small>of {head.attack_scenarios}</small>
+                </span>
+                <span>{evidence.baselineLabel}</span>
+              </li>
+              {report && (
+                <li>
+                  <span className="stat num">
+                    {report.latency_ms.proxy_p50.toFixed(2)} <small>ms</small>
+                  </span>
+                  <span>{evidence.latencyLabel}</span>
+                </li>
               )}
-            </Reveal>
-            <Reveal as="li" className="step" delay={180}>
-              <h3>PayPal executes, only if allowed.</h3>
-              <p>Allowed calls go to the PayPal sandbox. Held calls wait for you. Blocked calls never leave.</p>
-              <dl className="panel panel-facts" data-ui>
+            </ul>
+            <p className="source">
+              <a href={reportLink}>{evidence.source}</a>, generated {new Date(report?.generated_at ?? "").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}.
+            </p>
+          </section>
+        )}
+
+        <section id="how" className="band story" aria-labelledby="how-title">
+          <div className="story-copy">
+            <h2 id="how-title">{story.punch}</h2>
+            <p className="lead">{story.title}</p>
+            <p>{story.body}</p>
+            <ol className="flow">
+              {story.steps.map((step) => (
+                <li key={step.title}>
+                  <h3>{step.title}</h3>
+                  <p>{step.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+          {watchRow && watchDecision && (
+            <article className="ask" data-ui aria-labelledby="ask-title">
+              <p className="ask-title" id="ask-title">
+                {story.cardTitle}
+              </p>
+              <div className="ask-item">
                 <div>
-                  <dt>PayPal sandbox order</dt>
-                  <dd>
-                    <code>0F4626979R705464G</code>
-                  </dd>
+                  <b>{watchRow.what}</b>
+                  <span>
+                    {watchRow.merchant}, {watch?.action.merchant_id}
+                  </span>
                 </div>
-                <div>
-                  <dt>Audit entry</dt>
-                  <dd>
-                    <code>7aabbf79</code>
-                  </dd>
+                <span className="num">{watchRow.amount}</span>
+              </div>
+              <div className="ask-verdict">
+                <span className="pill pill-block">
+                  {decisionWords[watchRow.decision]} <code>{watchRow.rule}</code>
+                </span>
+                <strong>{story.verdict}</strong>
+              </div>
+              <p className="ask-reason">{watchDecision.reason}</p>
+              <p className="ask-facts">
+                <span>
+                  {story.entry} <code>{watchRow.entry}</code> {story.follows} <code>{watchRow.prev}</code>
+                </span>
+                <span>
+                  Fingerprint <code>{hash}</code>
+                </span>
+              </p>
+              {injected && (
+                <p className="ask-facts">
+                  {stops.groups.A}: {injected.baseline_success} of {injected.scenarios} paid direct, {injected.protected_success} of {injected.scenarios} with Paycurb.
+                </p>
+              )}
+              <details className="raw">
+                <summary>{story.raw}</summary>
+                <div className="raw-grid">
+                  <div className="code-panel" data-ui>
+                    <p>{story.request}</p>
+                    <pre>
+                      <code>{JSON.stringify(watchPayload, null, 2)}</code>
+                    </pre>
+                  </div>
+                  <div className="code-panel" data-ui>
+                    <p>{story.response}</p>
+                    <pre>
+                      <code>{JSON.stringify(watchDecision, null, 2)}</code>
+                    </pre>
+                  </div>
                 </div>
-                <div>
-                  <dt>Follows</dt>
-                  <dd>
-                    <code>9c8e2e35</code>
-                  </dd>
-                </div>
-              </dl>
-            </Reveal>
-          </ol>
+              </details>
+            </article>
+          )}
         </section>
 
         <Picker />
 
+        <section className="band compare-band" aria-labelledby="card-title">
+          <div className="band-head">
+            <h2 id="card-title">{card.title}</h2>
+            <p>{card.body}</p>
+          </div>
+          <div className="compare">
+            <table>
+              <caption className="visually-hidden">{card.title}</caption>
+              <thead>
+                <tr>
+                  {card.columns.map((column) => (
+                    <th key={column} scope="col">
+                      {column}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {card.rows.map(([topic, cardSide, paycurbSide]) => (
+                  <tr key={topic}>
+                    <th scope="row">{topic}</th>
+                    <td data-label={card.columns[1]}>{cardSide}</td>
+                    <td data-label={card.columns[2]}>{paycurbSide}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         {head && (
-          <section id="stops" className="band stops" aria-labelledby="stops-title">
-            <Reveal className="stops-copy">
-              <h2 id="stops-title">What it stops</h2>
-              <p className="figure" aria-label={`${head.protected_success} of ${head.attack_scenarios} attacks moved money with Paycurb`}>
-                <span className="num">{head.protected_success}</span>
-                <span className="figure-of">of {head.attack_scenarios}</span>
-              </p>
-              <p>
-                {head.attack_scenarios} scripted attacks against the PayPal sandbox. With Paycurb in the way, {head.protected_success} moved money past the owner&apos;s limits. Paying PayPal directly,{" "}
-                <span className="num">
-                  <Tick value={head.baseline_success} />
-                  <span className="visually-hidden">{head.baseline_success}</span>
-                </span>{" "}
-                did, moving <span className="num">{dollars(head.money_lost_baseline_cents)}</span>.
-              </p>
-              {control && (
-                <p className="note">
-                  All {control.protected_success} of {control.scenarios} legitimate control purchases still went through.
-                </p>
-              )}
-            </Reveal>
-            <Reveal className="stops-table" delay={120}>
+          <section id="stops" className="band stops-grid" aria-labelledby="stops-title">
+            <div className="stops-copy">
+              <h2 id="stops-title">{stops.title}</h2>
+              <p>{stops.body(head.attack_scenarios, head.baseline_success, dollars(head.money_lost_baseline_cents), head.protected_success)}</p>
+              {control && <p className="note">{stops.control(control.scenarios)}</p>}
+            </div>
+            <div className="stops-table">
               <div className="sheet" data-ui>
                 <table>
                   <caption className="visually-hidden">Attack groups, how many moved money without and with Paycurb</caption>
                   <thead>
                     <tr>
-                      <th scope="col">Attack</th>
+                      <th scope="col">{stops.heads[0]}</th>
                       <th scope="col" className="num">
-                        Direct
+                        {stops.heads[1]}
                       </th>
                       <th scope="col" className="num">
-                        Paycurb
+                        {stops.heads[2]}
                       </th>
                       <th scope="col" className="num hide-phone">
-                        Lost direct
+                        {stops.heads[3]}
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {attacks.map((group) => (
                       <tr key={group.group}>
-                        <td>{groupNames[group.group]}</td>
+                        <td>{stops.groups[group.group]}</td>
                         <td className="num">
                           {group.baseline_success} of {group.scenarios}
                         </td>
@@ -177,43 +239,48 @@ export function Landing() {
                 </table>
               </div>
               <p className="limits">
-                <strong>Limits.</strong> The suite also records what still gets through by design. {report?.limitations.map((item) => `${item.description}.`).join(" ")} Any route to PayPal that bypasses the proxy is out of scope. <a href={threatModel}>Read the threat model.</a>
+                <strong>{stops.limitsLead}</strong> {stops.limits(report?.limitations.map((item) => `${item.description}.`).join(" ") ?? "")} <a href={threatModel}>{stops.limitsLink}</a>
               </p>
-            </Reveal>
+            </div>
           </section>
         )}
 
         <section id="chain" className="band chain" aria-labelledby="chain-title">
-          <Reveal className="band-head">
-            <h2 id="chain-title">Every decision is chained.</h2>
-            <p>Each entry carries the fingerprint of the one before it, so changing any past row breaks every row after it. These are real rows from a test run against the PayPal sandbox.</p>
-          </Reveal>
-          <Reveal className="chain-table" delay={120}>
+          <div className="band-head">
+            <h2 id="chain-title">{chain.title}</h2>
+            <p>{chain.body}</p>
+          </div>
+          <Reveal className="chain-table">
             <div className="sheet" data-ui>
-              <p className="table-badge">Chain verified, 12 entries</p>
+              <p className="table-badge">
+                <span>{chain.replay}</span>
+                <b>{chain.badge}</b>
+              </p>
               <table>
                 <caption className="visually-hidden">Audit log entries, each with the fingerprint of the previous entry</caption>
                 <thead>
                   <tr>
                     <th scope="col" className="num">
-                      Seq
+                      {chain.heads[0]}
                     </th>
                     <th scope="col" className="hide-small">
-                      Time
+                      {chain.heads[1]}
                     </th>
-                    <th scope="col">What</th>
+                    <th scope="col">{chain.heads[2]}</th>
                     <th scope="col" className="num hide-phone">
-                      Amount
+                      {chain.heads[3]}
                     </th>
-                    <th scope="col">Decision</th>
-                    <th scope="col">Entry</th>
+                    <th scope="col">{chain.heads[4]}</th>
+                    <th scope="col" className="hide-phone">
+                      {chain.heads[5]}
+                    </th>
                     <th scope="col" className="hide-small">
-                      Follows
+                      {chain.heads[6]}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {chainRows.map((row, position) => (
+                  {shown.map((row, position) => (
                     <tr key={row.seq} style={{ "--i": position } as React.CSSProperties}>
                       <td className="num">{row.seq}</td>
                       <td className="num hide-small">{row.time}</td>
@@ -224,10 +291,10 @@ export function Landing() {
                       <td className="num hide-phone">{row.amount}</td>
                       <td>
                         <span className={`pill pill-${row.decision}`}>
-                          {decisionWords[row.decision]} {row.rule}
+                          {decisionWords[row.decision]} <code>{row.rule}</code>
                         </span>
                       </td>
-                      <td>
+                      <td className="hide-phone">
                         <code>{row.entry}</code>
                       </td>
                       <td className="hide-small">
@@ -239,61 +306,22 @@ export function Landing() {
               </table>
             </div>
           </Reveal>
+          <p className="chain-foot">
+            <a className="text-link" href="/audit">
+              {chain.link}
+            </a>
+          </p>
         </section>
 
         <section id="open" className="band cta" aria-labelledby="cta-title">
-          <Reveal className="cta-copy">
-            <h2 id="cta-title">Try to break it.</h2>
-            <p>Sign in with the public demo password and watch decisions arrive live. It runs against the PayPal sandbox, so every payment is play money and anything you do can be reset.</p>
-          </Reveal>
-          <Reveal className="cta-dialog" delay={120}>
-            <OpenDemo />
-          </Reveal>
+          <div className="cta-copy">
+            <h2 id="cta-title">{cta.title}</h2>
+            <p>{cta.body}</p>
+          </div>
+          <OpenDemo />
         </section>
       </main>
-
-      <footer className="foot">
-        <div className="foot-grid">
-          <p className="mark">paycurb</p>
-          <ul>
-            <li>
-              <a href={repo}>GitHub repository</a>
-            </li>
-            <li>
-              <a href={`${repo}/blob/main/docs/architecture.md`}>Architecture</a>
-            </li>
-            <li>
-              <a href={threatModel}>Threat model</a>
-            </li>
-          </ul>
-          <ul>
-            <li>
-              <a href={`${repo}/blob/main/reports/attack-report.md`}>Attack report</a>
-            </li>
-            <li>
-              <a href={`${repo}/blob/main/docs/contracts.md`}>Interfaces</a>
-            </li>
-            <li>
-              <a href={`${repo}/blob/main/docs/paypal-spike.md`}>PayPal findings</a>
-            </li>
-          </ul>
-          <ul>
-            <li>
-              <a href="#try">Try to overspend</a>
-            </li>
-            <li>
-              <a href="#open">Open the live demo</a>
-            </li>
-            <li>
-              <a href="/login">Sign in</a>
-            </li>
-          </ul>
-        </div>
-        <p className="legal">
-          <span>MIT license. PayPal sandbox only, no real money moves.</span>
-          <a href="#top">Back to top</a>
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,16 +1,18 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent } from "react";
+import { CheckIcon, ClockIcon, XIcon } from "../icons";
+import { picker } from "./copy";
 import { decide, demoPolicy, scenarios } from "./scenarios";
 
-const verdicts = { allow: "Allowed.", escalate: "Held for you.", block: "Blocked." } as const;
-const words = { allow: "allowed", escalate: "held", block: "blocked" } as const;
+const icons = { allow: CheckIcon, escalate: ClockIcon, block: XIcon };
 
 export function Picker() {
   const [index, setIndex] = useState(0);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const scenario = scenarios[index];
   const result = decide(scenario);
+  const Icon = icons[result.decision];
 
   function move(event: KeyboardEvent, step: number) {
     event.preventDefault();
@@ -28,16 +30,12 @@ export function Picker() {
     <section id="try" className={`band try is-${result.decision}`} aria-labelledby="try-title">
       <div className="try-head">
         <h2 id="try-title">
-          This purchase is{" "}
-          <span key={result.decision} className="swap">
-            {words[result.decision]}
-          </span>
-          .
+          This purchase is <span className="word">{picker.words[result.decision]}</span>.
         </h2>
-        <p>Pick what the agent tries to buy. The same policy engine the proxy runs decides it, right here in your browser.</p>
+        <p>{picker.body}</p>
       </div>
       <div className="picker" data-ui>
-        <div role="radiogroup" aria-label="What the agent tries to buy" className="options" onKeyDown={onKeyDown}>
+        <div role="radiogroup" aria-label={picker.group} className="options" onKeyDown={onKeyDown}>
           {scenarios.map((item, position) => (
             <button
               key={item.id}
@@ -57,9 +55,14 @@ export function Picker() {
           ))}
         </div>
         <div className="verdict" aria-live="polite">
-          <strong key={`${scenario.id}-${result.decision}`}>{verdicts[result.decision]}</strong>
-          <p>{result.reason}</p>
-          <span className="rule">Rule {result.rule_id}, policy version {demoPolicy.version}</span>
+          <span className={`pill pill-${result.decision}`}>{picker.verdicts[result.decision]}</span>
+          <p className="verdict-line">
+            <Icon size={20} strokeWidth={2.5} />
+            {result.reason}
+          </p>
+          <span className="rule">
+            Rule <code>{result.rule_id}</code>, policy version {demoPolicy.version}
+          </span>
         </div>
       </div>
     </section>

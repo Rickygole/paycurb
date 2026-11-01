@@ -1,17 +1,36 @@
-export function Header({ threatModel }: { threatModel: string }) {
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Logo } from "../Logo";
+import { nav } from "./copy";
+
+export function Header({ heroActions = false }: { heroActions?: boolean }) {
+  const [hideDemo, setHideDemo] = useState(heroActions);
+
+  useEffect(() => {
+    const target = document.getElementById("hero-actions");
+    if (!target) return;
+    const observer = new IntersectionObserver(([entry]) => setHideDemo(entry.isIntersecting));
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <header className="bar">
-      <a className="mark" href="#top" aria-label="Paycurb, back to the top">
-        paycurb
-      </a>
-      <nav aria-label="Page" className="bar-links">
-        <a href="#how">How it works</a>
-        <a href="#stops">What it stops</a>
-        <a href={threatModel}>Threat model</a>
+      <Link className="bar-home" href="/" aria-label="Paycurb home">
+        <Logo />
+      </Link>
+      <nav aria-label="Site" className="bar-links">
+        {nav.links.map((link) => (
+          <a key={link.href} href={link.href}>
+            {link.label}
+          </a>
+        ))}
       </nav>
-      <a className="btn btn-solid btn-bar" href="#open">
-        Open the live demo
-      </a>
+      <Link className="btn btn-solid btn-bar" href="/#open" data-hidden={hideDemo} aria-hidden={hideDemo || undefined} tabIndex={hideDemo ? -1 : undefined}>
+        {nav.demo}
+      </Link>
     </header>
   );
 }

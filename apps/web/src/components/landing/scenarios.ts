@@ -54,8 +54,8 @@ export const scenarios: Scenario[] = [
   },
   {
     id: "tampered",
-    label: "Approved lamp, resent bigger",
-    detail: "You approved $75.00. The agent now sends $450.00",
+    label: "Approved lamp, resent at $450",
+    detail: "You approved $75.00. The agent sends $450.00.",
     approval: { payload_hash: "lamp", amount_cents: 7500 },
     action: { ...base, merchant_id: "acme-office", category: "office_supplies", amount_cents: 45000, line_items: [{ sku: "CUSTOM-1", qty: 1, unit_cents: 45000 }], payload_hash: "tampered" },
   },
