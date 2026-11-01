@@ -2,7 +2,7 @@
 
 import { AllCommunityModule, ModuleRegistry, type ColDef, type RowClickedEvent } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { api, errorText } from "@/lib/api";
 import { count, dollars, formatDateTime, auditMerchant, fullReason, hasAmount, stamp } from "@/lib/format";
 import type { AuditPage, AuditRow } from "@/lib/types";
@@ -15,7 +15,7 @@ import { DownloadIcon } from "../icons";
 import { PageHeader } from "../Shell";
 import { ErrorState } from "../states";
 import { ChainStatus } from "./ChainStatus";
-import { DecisionCell, HashCell, MissingCell } from "./cells";
+import { CompactCell, DecisionCell, HashCell, MissingCell } from "./cells";
 import { gridTheme } from "./gridTheme";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -68,6 +68,20 @@ const columns: ColDef<AuditRow>[] = [
 
 const defaultColDef: ColDef<AuditRow> = { resizable: true, sortable: true, suppressHeaderMenuButton: true };
 
+const exportKeys = columns.map((column) => column.colId ?? String(column.field));
+const phoneColumns: ColDef<AuditRow>[] = [
+  { colId: "compact", headerName: "Entry", flex: 1, autoHeight: true, sortable: false, cellRenderer: CompactCell, getQuickFilterText: () => "" },
+  ...columns.map((column) => ({ ...column, hide: true })),
+];
+
+const PHONE = "(max-width: 640px)";
+const onPhoneChange = (change: () => void) => {
+  const query = window.matchMedia(PHONE);
+  query.addEventListener("change", change);
+  return () => query.removeEventListener("change", change);
+};
+const readPhone = () => window.matchMedia(PHONE).matches;
+
 export function AuditLog() {
   const grid = useRef<AgGridReact<AuditRow>>(null);
   const [rows, setRows] = useState<AuditRow[]>([]);
@@ -79,6 +93,7 @@ export function AuditLog() {
   const [selected, setSelected] = useState<AuditRow | null>(null);
   const shown = useLast(selected);
   const generation = useRef(0);
+  const phone = useSyncExternalStore(onPhoneChange, readPhone, () => false);
 
   const loadFrom = useCallback((start: string | null) => {
     const id = ++generation.current;
@@ -123,7 +138,7 @@ export function AuditLog() {
     if (event.data) setSelected(event.data);
   }, []);
 
-  const exportCsv = () => grid.current?.api.exportDataAsCsv({ allColumns: true, fileName: `paycurb-audit-${new Date().toISOString().slice(0, 10)}.csv` });
+  const exportCsv = () => grid.current?.api.exportDataAsCsv({ columnKeys: exportKeys, fileName: `paycurb-audit-${new Date().toISOString().slice(0, 10)}.csv` });
 
   const progress = useMemo(() => {
     if (done) return `${count(rows.length)} entries`;
@@ -171,7 +186,7 @@ export function AuditLog() {
           ref={grid}
           theme={gridTheme}
           rowData={rows}
-          columnDefs={columns}
+          columnDefs={phone ? phoneColumns : columns}
           defaultColDef={defaultColDef}
           getRowId={(p) => String(p.data.seq)}
           quickFilterText={search}

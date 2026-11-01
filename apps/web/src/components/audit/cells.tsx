@@ -1,8 +1,10 @@
 "use client";
 
 import type { CustomCellRendererProps } from "ag-grid-react";
+import { auditMerchant, stamp } from "@/lib/format";
 import type { AuditRow } from "@/lib/types";
 import { DecisionBadge } from "../DecisionBadge";
+import { Amount } from "../feed/DecisionCard";
 import { HashValue } from "../feed/DecisionDrawer";
 
 export function DecisionCell({ data }: CustomCellRendererProps<AuditRow>) {
@@ -25,4 +27,24 @@ export function HashCell({ data }: CustomCellRendererProps<AuditRow>) {
 
 export function MissingCell() {
   return <span className="missing" role="img" aria-label="None" />;
+}
+
+export function CompactCell({ data }: CustomCellRendererProps<AuditRow>) {
+  if (!data) return null;
+  return (
+    <span className="audit-compact">
+      <span className="audit-compact-line">
+        <b>{data.merchant_id ? auditMerchant(data) : data.tool}</b>
+        <span className="num">
+          <Amount cents={data.amount_cents} />
+        </span>
+      </span>
+      <span className="audit-compact-line">
+        <DecisionBadge decision={data.decision} />
+        <span className="muted small num">
+          Entry {data.seq}, {stamp(data.ts)}
+        </span>
+      </span>
+    </span>
+  );
 }

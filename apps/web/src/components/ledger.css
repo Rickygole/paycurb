@@ -1856,6 +1856,34 @@ a.figure:hover .figure-cap {
   font-weight: 400;
 }
 
+.audit-grid .ag-cell-wrapper:has(.audit-compact),
+.audit-grid .ag-cell-value:has(> .audit-compact) {
+  flex: 1;
+}
+
+.audit-compact {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding-block: 10px;
+  line-height: 20px;
+}
+
+.audit-compact-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.audit-compact-line b {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .audit-grid .status {
   height: 24px;
 }
