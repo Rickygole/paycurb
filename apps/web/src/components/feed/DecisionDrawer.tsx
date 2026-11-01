@@ -46,7 +46,7 @@ export function DecisionDrawer({ item, open, onClose }: { item: Feed | null; ope
                 <span style={{ textTransform: "capitalize" }}>{kindLabel(item.kind)}</span>
               </Field>
               <Field label="Time">{formatDateTime(item.ts)}</Field>
-              <Field label="Policy version">v{item.policy_version}</Field>
+              {item.policy_version != null && <Field label="Policy version">v{item.policy_version}</Field>}
               <Field label="PayPal reference">
                 {item.paypal_ref ? <span className="mono">{item.paypal_ref}</span> : <span className="muted">None. This call never reached PayPal.</span>}
               </Field>

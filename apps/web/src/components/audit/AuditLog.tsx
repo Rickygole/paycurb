@@ -233,7 +233,7 @@ function AuditRecord({ row }: { row: AuditRow }) {
           <Field label="Merchant">{auditMerchant(row)}</Field>
           <Field label="Tool">{row.tool}</Field>
           <Field label="Rule">{row.rule_id}</Field>
-          <Field label="Policy version">v{row.policy_version}</Field>
+          {row.policy_version != null && <Field label="Policy version">v{row.policy_version}</Field>}
           <Field label="PayPal reference">{row.paypal_ref ? <span className="mono">{row.paypal_ref}</span> : <span className="muted">None. This call never reached PayPal.</span>}</Field>
           <Field label="Action id">
             <span className="mono">{row.action_id}</span>

@@ -16,7 +16,7 @@ export interface Feed {
   decision: Outcome;
   rule_id: string;
   reason: string;
-  policy_version: number;
+  policy_version: number | null;
   paypal_ref: string | null;
   payload_hash: string;
   action: Action;
@@ -50,7 +50,7 @@ export interface AuditRow {
   decision: Outcome;
   rule_id: string;
   reason: string;
-  policy_version: number;
+  policy_version: number | null;
   payload_hash: string;
   paypal_ref: string | null;
   prev_hash: string;
