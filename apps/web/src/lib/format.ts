@@ -30,6 +30,13 @@ export function auditMerchant(row: { kind: string; merchant_id: string | null })
   return row.merchant_id === null && ["policy", "admin"].includes(row.kind) ? "None" : merchantName(row.merchant_id);
 }
 
+const toolLabels: Record<string, string> = { reset: "Workspace reset", policy: "Policy change", approval: "Owner decision" };
+
+export function toolLabel(tool: string) {
+  const words = toolLabels[tool] ?? tool.replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function productName(sku: string) {
   return products.find((product) => product.id === sku)?.name ?? sku;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countdown, fullReason, hasAmount, plainReason, stamp } from "../src/lib/format";
+import { countdown, fullReason, hasAmount, plainReason, stamp, toolLabel } from "../src/lib/format";
 
 describe("plainReason", () => {
   it("drops the decision word the status pill already says", () => {
@@ -41,5 +41,13 @@ describe("stamp", () => {
     const now = new Date(2026, 9, 31, 12, 0, 0);
     expect(stamp(new Date(2026, 9, 31, 9, 5, 7).toISOString(), now)).toBe("Today, 09:05:07");
     expect(stamp(new Date(2026, 9, 30, 23, 59, 1).toISOString(), now)).toBe("Oct 30, 23:59:01");
+  });
+});
+
+describe("toolLabel", () => {
+  it("names system entries in words a person reads", () => {
+    expect(toolLabel("reset")).toBe("Workspace reset");
+    expect(toolLabel("policy")).toBe("Policy change");
+    expect(toolLabel("get_order")).toBe("Get order");
   });
 });

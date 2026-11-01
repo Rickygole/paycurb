@@ -163,11 +163,11 @@ export function AuditLog() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <p role="status" className="muted grow small">
+        <p role="status" className="muted grow small" style={{ whiteSpace: "nowrap" }}>
           {progress}
         </p>
         {!loading && (
-          <button type="button" className="btn btn-quiet btn-sm" onClick={resume}>
+          <button type="button" className="btn btn-outline btn-sm" onClick={resume}>
             {done ? "Check for new entries" : "Load more"}
           </button>
         )}

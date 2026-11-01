@@ -1,7 +1,7 @@
 "use client";
 
 import type { CustomCellRendererProps } from "ag-grid-react";
-import { auditMerchant, stamp } from "@/lib/format";
+import { auditMerchant, stamp, toolLabel } from "@/lib/format";
 import type { AuditRow } from "@/lib/types";
 import { DecisionBadge } from "../DecisionBadge";
 import { Amount } from "../feed/DecisionCard";
@@ -34,7 +34,7 @@ export function CompactCell({ data }: CustomCellRendererProps<AuditRow>) {
   return (
     <span className="audit-compact">
       <span className="audit-compact-line">
-        <b>{data.merchant_id ? auditMerchant(data) : data.tool}</b>
+        <b>{data.merchant_id ? auditMerchant(data) : toolLabel(data.tool)}</b>
         <span className="num">
           <Amount cents={data.amount_cents} />
         </span>
