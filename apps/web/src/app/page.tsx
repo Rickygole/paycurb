@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Landing } from "@/components/landing/Landing";
+import { ConceptA } from "@/components/concept-a/ConceptA";
 
 export const metadata: Metadata = {
   title: "Paycurb: a payment firewall for AI agents",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <Landing />;
+  return <ConceptA />;
 }
