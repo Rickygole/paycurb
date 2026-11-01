@@ -1,0 +1,217 @@
+.connect-hero {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: var(--s3);
+  align-items: start;
+  padding-top: var(--s4);
+}
+
+.connect-intro {
+  grid-column: 1 / span 6;
+  display: grid;
+  gap: var(--s2);
+}
+
+.connect-intro .support {
+  max-width: 52ch;
+}
+
+.connect-intro .statement {
+  font-size: clamp(40px, 5vw, 72px);
+}
+
+.endpoint {
+  grid-column: 8 / -1;
+  display: grid;
+  gap: 12px;
+}
+
+.sandbox {
+  margin-top: var(--s1);
+  padding: var(--s2);
+  background: var(--held-bg);
+  color: var(--held-ink);
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.sandbox h2 {
+  margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--held-ink);
+}
+
+[data-ui] .code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: 4px 4px 0 0;
+}
+
+[data-ui] .code-head p {
+  padding-top: 4px;
+}
+
+.copy-btn {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.copy-btn:hover {
+  border-color: var(--muted);
+}
+
+.code-block {
+  background: var(--surface);
+  border-color: var(--hairline);
+}
+
+.quick {
+  background: var(--surface);
+}
+
+.quick h2 {
+  margin-bottom: var(--s3);
+}
+
+.quick-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s3);
+  counter-reset: quick;
+}
+
+.quick-steps li {
+  display: grid;
+  align-content: start;
+  gap: var(--s1);
+  counter-increment: quick;
+}
+
+.quick-steps li::before {
+  content: counter(quick);
+  font-family: var(--figures);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.quick-steps h3 {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.quick-steps p {
+  color: var(--soft);
+  font-size: 16px;
+}
+
+.quick-steps a {
+  font-size: 15px;
+}
+
+.connect-row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: var(--s2);
+  align-items: start;
+}
+
+.connect-row + .connect-row {
+  padding-top: 0;
+}
+
+.connect-text {
+  grid-column: 1 / span 4;
+  display: grid;
+  gap: var(--s2);
+}
+
+.connect-text p {
+  max-width: 60ch;
+  color: var(--soft);
+}
+
+.connect-code {
+  grid-column: 6 / -1;
+  display: grid;
+  gap: var(--s2);
+}
+
+.answers-band {
+  background: var(--surface);
+}
+
+.answers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s2);
+}
+
+.answer[data-ui] {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  min-width: 0;
+  padding: var(--s2);
+  background: var(--ground);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+
+.answer[data-ui] p {
+  color: var(--soft);
+  font-size: 16px;
+}
+
+.js .connect-code.is-in > * {
+  animation: row-in 360ms var(--ease) 80ms both;
+}
+
+.js .connect-code.is-in > :nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.js .quick-steps.is-in > li,
+.js .answers.is-in > .answer {
+  animation: row-in 360ms var(--ease) calc(var(--i) * 80ms + 80ms) both;
+}
+
+.answers-note {
+  margin-top: var(--s2);
+}
+
+@media (max-width: 1080px) {
+  .connect-intro,
+  .endpoint,
+  .connect-text,
+  .connect-code {
+    grid-column: 1 / -1;
+  }
+
+  .quick-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .answers {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
