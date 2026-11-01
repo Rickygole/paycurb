@@ -1179,13 +1179,11 @@
   position: sticky;
   top: 100px;
   align-self: start;
-  height: min(620px, calc(100dvh - 140px));
 }
 
 .cb-tour-win {
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: hidden;
   border-radius: 16px;
   border: 10px solid #dae3d9;
@@ -1215,14 +1213,12 @@
 }
 
 .cb-tour-layers {
-  position: relative;
-  flex: 1;
+  display: grid;
 }
 
 .cb-tour-layer {
-  position: absolute;
-  inset: 0;
-  overflow: auto;
+  grid-area: 1 / 1;
+  overflow: hidden;
   visibility: hidden;
   opacity: 0;
   transform: translateY(24px);
@@ -1810,6 +1806,25 @@
 @keyframes cb-grow {
   from {
     transform: scaleX(0);
+  }
+}
+
+@media (max-height: 820px) {
+  .cb-tour-stage {
+    top: 84px;
+  }
+
+  .cb-tour-layer .cb-fig-card {
+    padding-block: 16px;
+  }
+
+  .cb-tour-layer .cb-code {
+    padding-block: 12px;
+    line-height: 1.45;
+  }
+
+  .cb-tour-layer .cb-code-held {
+    margin-top: 12px;
   }
 }
 
