@@ -1531,12 +1531,84 @@ a.figure:hover .figure-cap {
   }
 }
 
+.history-wrap {
+  overflow-x: auto;
+}
+
 @media (max-width: 560px) {
+  .held {
+    padding: 16px;
+  }
+  .held-head {
+    flex-direction: column-reverse;
+    gap: 4px;
+  }
+  .held-amount {
+    font-size: 40px;
+    line-height: 44px;
+  }
+  .held-foot {
+    display: grid;
+    gap: 12px;
+  }
   .held-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
     width: 100%;
   }
   .held-actions .btn {
-    flex: 1;
+    height: 52px;
+    font-size: 16px;
+  }
+  .history-wrap {
+    overflow: visible;
+  }
+  .history thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .history,
+  .history tbody,
+  .history tr,
+  .history td {
+    display: block;
+  }
+  .history tr {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .history tr:last-child {
+    border-bottom: 0;
+  }
+  .history td,
+  .history th:first-child,
+  .history td:first-child,
+  .history td:last-child {
+    height: auto;
+    padding: 3px 0;
+    border: 0;
+    white-space: normal;
+  }
+  .history td:first-child {
+    font-weight: 600;
+  }
+  .history td[data-label] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .history td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--muted);
+    font-family: var(--font);
+    text-align: left;
   }
 }
 

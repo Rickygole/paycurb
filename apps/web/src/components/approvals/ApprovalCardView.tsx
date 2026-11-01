@@ -107,12 +107,12 @@ export function ApprovalCardView({ card, nowMs, index, onChange }: { card: Appro
         </div>
         <p className="held-amount num">{dollars(card.amount_cents)}</p>
       </header>
-      <p style={{ fontWeight: 500 }}>{plainReason({ tool: "create_order", decision: "escalate", reason: card.reason })}</p>
       {card.line_items.length > 0 ? (
         <LineItems items={card.line_items} />
       ) : (
         <p className="muted">No line items came with this request. Check the merchant and the amount before you approve.</p>
       )}
+      <p style={{ fontWeight: 500 }}>{plainReason({ tool: "create_order", decision: "escalate", reason: card.reason })}</p>
       {card.status !== "pending" && <Outcome card={card} />}
       {error && (
         <p role="alert" className="notice" style={{ color: "var(--block-ink)" }}>

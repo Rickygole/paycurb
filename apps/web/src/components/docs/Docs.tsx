@@ -182,9 +182,11 @@ export function Docs({ endpoint }: { endpoint: string }) {
                         <code>{field.key}</code>
                       </th>
                       <td>{field.meaning}</td>
-                      <td className="mono">{field.rule}</td>
-                      <td>{fieldValue(workspaceDefault, field.key)}</td>
-                      <td>{fieldValue(strictDefault, field.key)}</td>
+                      <td className="mono" data-label="Rule">
+                        {field.rule}
+                      </td>
+                      <td data-label="Workspace default">{fieldValue(workspaceDefault, field.key)}</td>
+                      <td data-label="Strict default">{fieldValue(strictDefault, field.key)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -213,7 +215,7 @@ export function Docs({ endpoint }: { endpoint: string }) {
                 on the approval. The agent does not need to call again.
               </li>
               <li>
-                <strong>Used once.</strong> After it pays, the approval is marked executed. Using it again is blocked with R15.
+                <strong>Used once.</strong> After it pays, the approval is marked executed. A call that passes the same approval_id again is blocked with R15.
               </li>
               <li>
                 <strong>Expires.</strong> A hold waits approval_ttl_minutes: 1440 minutes, 24 hours, in the workspace default policy, and 15 minutes for a compiled policy that

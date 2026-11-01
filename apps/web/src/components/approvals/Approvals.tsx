@@ -81,7 +81,7 @@ function History({ cards }: { cards: ApprovalCard[] }) {
       {cards.length === 0 ? (
         <p className="panel-pad muted">Orders you approve or reject, and ones that expire, are listed here.</p>
       ) : (
-        <div style={{ overflowX: "auto" }}>
+        <div className="history-wrap">
           <table className="history">
             <thead>
               <tr>
@@ -101,13 +101,15 @@ function History({ cards }: { cards: ApprovalCard[] }) {
               {cards.map((card) => (
                 <tr key={card.id}>
                   <td>{merchantName(card.merchant_id, card.merchant_name)}</td>
-                  <td className="n num">{dollars(card.amount_cents)}</td>
-                  <td>
+                  <td className="n num" data-label="Amount">
+                    {dollars(card.amount_cents)}
+                  </td>
+                  <td data-label="Request">
                     <DecisionBadge decision={historyTone[card.status] ?? null} label={historyWords[card.status] ?? card.status} />
                   </td>
-                  <td>{card.execution ? <ExecutionPill status={card.execution.status} /> : <span className="missing" role="img" aria-label="None" />}</td>
-                  <td>{card.execution?.paypal_ref ? <span className="mono">{card.execution.paypal_ref}</span> : <span className="missing" role="img" aria-label="None" />}</td>
-                  <td className="n num muted" title={new Date(card.created_at).toLocaleString()}>
+                  <td data-label="Execution">{card.execution ? <ExecutionPill status={card.execution.status} /> : <span className="missing" role="img" aria-label="None" />}</td>
+                  <td data-label="PayPal reference">{card.execution?.paypal_ref ? <span className="mono">{card.execution.paypal_ref}</span> : <span className="missing" role="img" aria-label="None" />}</td>
+                  <td className="n num muted" data-label="Held at" title={new Date(card.created_at).toLocaleString()}>
                     {stamp(card.created_at)}
                   </td>
                 </tr>
