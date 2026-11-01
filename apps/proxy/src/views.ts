@@ -90,7 +90,7 @@ const approvalSelect = `
          m.display_name AS merchant_name, a.line_items_json,
          (SELECT d.reason FROM decisions d WHERE d.action_id = p.action_id ORDER BY d.id LIMIT 1) AS reason,
          (SELECT row_to_json(x) FROM (SELECT e.status, e.paypal_ref FROM executions e WHERE e.action_id IN
-            (SELECT id FROM actions WHERE payload_hash = p.payload_hash) ORDER BY e.id DESC LIMIT 1) x) AS execution
+            (SELECT id FROM actions WHERE payload_hash = p.payload_hash) AND e.status <> 'held' ORDER BY e.id DESC LIMIT 1) x) AS execution
   FROM approvals p JOIN actions a ON a.id = p.action_id LEFT JOIN merchants m ON m.id = p.merchant_id`;
 
 const toCard = (row: Record<string, any>): ApprovalCard => ({

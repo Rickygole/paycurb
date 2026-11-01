@@ -36,9 +36,9 @@ export async function decideApproval(id: string, verdict: Verdict, now: Date): P
 
 export async function executeApproved(deps: Deps, id: string) {
   const row = (
-    await getPool().query("SELECT p.id, p.args_json, a.tool, a.agent_id FROM approvals p JOIN actions a ON a.id = p.action_id WHERE p.id::text = $1 AND p.status = 'approved'", [id])
+    await getPool().query("SELECT p.id, e.response_json_redacted AS args, a.tool, a.agent_id FROM approvals p JOIN actions a ON a.id = p.action_id JOIN executions e ON e.action_id = p.action_id AND e.status = 'held' WHERE p.id::text = $1 AND p.status = 'approved'", [id])
   ).rows[0];
-  if (!row?.args_json) return;
-  const args = row.tool === "create_order" ? { ...row.args_json, approval_id: row.id } : row.args_json;
+  if (!row?.args) return;
+  const args = row.tool === "create_order" ? { ...row.args, approval_id: row.id } : row.args;
   await handleCall(deps, { tool: row.tool, args, agentId: row.agent_id });
 }
