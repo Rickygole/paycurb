@@ -3,16 +3,10 @@
 import "./ledger.css";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { ApiError, errorText, postJson } from "@/lib/api";
+import { postJson, signInProblem } from "@/lib/api";
 import { AlertIcon, CheckIcon } from "./icons";
 import { LogoGlyph } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
-
-function problemText(problem: unknown) {
-  if (problem instanceof ApiError && problem.status === 401) return "That password is not correct. Check it and try again.";
-  if (problem instanceof ApiError && problem.status === 429) return "Too many sign in attempts from this address. Wait a minute, then try again.";
-  return errorText(problem);
-}
 
 export function LoginForm({ facts, demoPassword }: { facts: string[]; demoPassword: string | null }) {
   const router = useRouter();
@@ -29,7 +23,7 @@ export function LoginForm({ facts, demoPassword }: { facts: string[]; demoPasswo
       await postJson("/api/login", { password: value });
       router.replace("/feed");
     } catch (problem) {
-      setError(via === "demo" && problem instanceof ApiError && problem.status === 401 ? "The demo workspace did not open. Try again, or sign in with the owner password." : problemText(problem));
+      setError(signInProblem(problem, via));
       setBusy(null);
       input.current?.focus();
     }

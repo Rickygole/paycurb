@@ -36,6 +36,15 @@ export function errorText(error: unknown) {
   return "Something went wrong";
 }
 
+export function signInProblem(problem: unknown, via: "password" | "demo") {
+  if (problem instanceof ApiError && problem.status === 401)
+    return via === "demo" ? "The demo workspace did not open. Try again, or sign in with the owner password." : "That password is not correct. Check it and try again.";
+  if (problem instanceof ApiError && problem.status === 429) return "Too many sign in attempts from this address. Wait a minute, then try again.";
+  if (problem instanceof TypeError || (problem instanceof ApiError && problem.status >= 500))
+    return `The ${via === "demo" ? "demo " : ""}workspace is not reachable right now. Try again in a moment.`;
+  return errorText(problem);
+}
+
 export function useApi<T>(path: string | null, refreshMs?: number) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
