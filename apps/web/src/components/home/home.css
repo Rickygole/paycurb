@@ -153,3 +153,37 @@
     margin-right: 6px;
   }
 }
+
+.home .cb-end-runs {
+  font-size: 16px;
+  max-width: 52ch;
+  color: #dcefe2;
+}
+
+.home .cb-signin {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  padding: 28px;
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.home .cb-signin h3 {
+  font-size: 28px;
+}
+
+.home .cb-signin p {
+  font-size: 17px;
+  color: var(--ink-2);
+}
+
+.home .cb-signin .cb-btn {
+  width: 100%;
+}
+
+.home .cb-signin-link {
+  font-weight: 700;
+  color: var(--green);
+}

@@ -3,13 +3,15 @@ export const threatModel = `${repo}/blob/main/docs/threat-model.md`;
 
 export const nav = {
   links: [
+    { href: "/#product", label: "Product" },
     { href: "/#tour", label: "How it works" },
-    { href: "/#try", label: "Try it" },
-    { href: "/#numbers", label: "Results" },
-    { href: "/#compare", label: "Versus cards" },
-    { href: "/connect", label: "Connect" },
+    { href: "/connect", label: "Developers" },
+    { href: "/docs", label: "Docs" },
+    { href: "/#security", label: "Security" },
+    { href: repo, label: "GitHub" },
   ],
-  demo: "Try the demo",
+  signIn: "Sign in",
+  start: "Get started",
 };
 
 export const meta = {
@@ -36,43 +38,40 @@ export const chain = {
   replay: "Replay of a real sandbox run, October 31, 2026, times in UTC",
   badge: "Chain verified, 12 entries. Entries 6 to 10 shown.",
   heads: ["No.", "Time", "What", "Amount", "Decision", "Entry", "Follows"],
-  link: "See the full audit log in the demo",
-};
-
-export const dialog = {
-  title: "Try the demo",
-  label: "Demo password",
-  placeholder: "Demo password",
-  hint: "The password is public on purpose. It's a sandbox, so no real money moves.",
-  error: "Wrong password. Try again.",
-  group: "Where to start",
-  submit: "Try the demo",
-  pending: "Opening...",
-  destinations: [
-    { id: "feed", label: "Live feed", path: "/feed" },
-    { id: "agent", label: "Demo agent", path: "/agent" },
-  ],
+  link: "Open the full audit log in your workspace",
 };
 
 export const footer = {
   columns: [
-    [
-      { href: "/connect", label: "Connect your agent" },
-      { href: repo, label: "GitHub repository" },
-      { href: `${repo}/blob/main/docs/architecture.md`, label: "Architecture" },
-    ],
-    [
-      { href: threatModel, label: "Threat model" },
-      { href: `${repo}/blob/main/reports/attack-report.md`, label: "Attack report" },
-      { href: `${repo}/blob/main/docs/contracts.md`, label: "Interfaces" },
-      { href: `${repo}/blob/main/docs/paypal-spike.md`, label: "What we learned from PayPal" },
-    ],
-    [
-      { href: "/#try", label: "Try the rules" },
-      { href: "/#open", label: "Try the demo" },
-      { href: "/login", label: "Sign in" },
-    ],
+    {
+      title: "Product",
+      links: [
+        { href: "/#tour", label: "How it works" },
+        { href: "/#security", label: "Security" },
+        { href: "/#compare", label: "Versus capped cards" },
+        { href: "/login", label: "Sign in" },
+      ],
+    },
+    {
+      title: "Developers",
+      links: [
+        { href: "/connect", label: "Connect your agent" },
+        { href: "/docs", label: "Docs" },
+        { href: `${repo}/blob/main/docs/contracts.md`, label: "Interfaces" },
+        { href: `${repo}/blob/main/docs/paypal-spike.md`, label: "What we learned from PayPal" },
+      ],
+    },
+    {
+      title: "Project",
+      links: [
+        { href: repo, label: "GitHub" },
+        { href: `${repo}/blob/main/docs/architecture.md`, label: "Architecture" },
+        { href: threatModel, label: "Threat model" },
+        { href: `${repo}/blob/main/reports/attack-report.md`, label: "Attack report" },
+        { href: `${repo}/blob/main/LICENSE`, label: "License (MIT)" },
+      ],
+    },
   ],
-  line: "Built for the PayPal hackathon. Sandbox only, no real money moves.",
-  license: "MIT license.",
+  line: "Sandbox workspace: PayPal sandbox only, no real money moves.",
 };
+

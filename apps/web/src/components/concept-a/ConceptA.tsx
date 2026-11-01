@@ -34,15 +34,18 @@ export function Bar() {
       <a className="ca-home" href="#top" aria-label="Paycurb, back to the top">
         <Logo size={24} />
       </a>
-      <nav aria-label="Page" className="ca-nav">
+      <nav aria-label="Site" className="ca-nav">
         {nav.links.map((link) => (
           <a key={link.href} className="ca-sweep" href={local(link.href)}>
             {link.label}
           </a>
         ))}
       </nav>
-      <a className="ca-btn ca-btn-ink ca-btn-bar" href="#open" data-magnet>
-        Open the live demo
+      <a className="ca-sweep ca-signin" href="/login">
+        {nav.signIn}
+      </a>
+      <a className="ca-btn ca-btn-ink ca-btn-bar" href="/login" data-magnet>
+        {nav.start}
       </a>
     </header>
   );
@@ -281,22 +284,27 @@ export function Foot() {
   return (
     <footer className="ca-foot">
       <div className="ca-foot-top">
-        <Logo size={24} />
-        <p className="ca-foot-line">Give an AI agent a budget, not a credit card.</p>
-        <ul>
-          {footer.columns.flat().map((link) => (
-            <li key={link.href}>
-              <a className="ca-sweep" href={local(link.href)}>
-                {link.label}
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className="ca-foot-brand">
+          <Logo size={24} />
+          <p className="ca-foot-line">Give an AI agent a budget, not a credit card.</p>
+        </div>
+        {footer.columns.map((column) => (
+          <div key={column.title} className="ca-foot-col">
+            <h2 className="ca-foot-title">{column.title}</h2>
+            <ul>
+              {column.links.map((link) => (
+                <li key={link.href}>
+                  <a className="ca-sweep" href={local(link.href)}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
       <div className="ca-legal">
-        <span>
-          {footer.line} {footer.license}
-        </span>
+        <span>{footer.line}</span>
         <a className="ca-sweep" href="#top">
           Back to top
         </a>

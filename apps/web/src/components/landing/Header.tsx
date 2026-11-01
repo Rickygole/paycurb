@@ -28,8 +28,11 @@ export function Header({ heroActions = false }: { heroActions?: boolean }) {
           </a>
         ))}
       </nav>
-      <Link className="btn btn-solid btn-bar" href="/#open" data-hidden={hideDemo} aria-hidden={hideDemo || undefined} tabIndex={hideDemo ? -1 : undefined}>
-        {nav.demo}
+      <Link className="bar-signin" href="/login">
+        {nav.signIn}
+      </Link>
+      <Link className="btn btn-solid btn-bar" href="/login" data-hidden={hideDemo} aria-hidden={hideDemo || undefined} tabIndex={hideDemo ? -1 : undefined}>
+        {nav.start}
       </Link>
     </header>
   );

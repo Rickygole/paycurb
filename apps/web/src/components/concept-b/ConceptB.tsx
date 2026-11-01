@@ -2,7 +2,6 @@ import { CopyButton } from "../CopyButton";
 import { CheckIcon, ClockIcon, StopIcon } from "../icons";
 import { chainRows } from "../landing/chain";
 import { dollars } from "../landing/data";
-import { OpenDemo } from "../landing/OpenDemo";
 import { demoPolicy } from "../landing/scenarios";
 import type { Facts } from "./facts";
 import { lampDecision, lampPayload, paypalReference, story } from "./heroData";
@@ -117,7 +116,7 @@ export function StoryHero() {
   ];
 
   return (
-    <section className="cb-hero" aria-labelledby="cb-title">
+    <section id="product" className="cb-hero" aria-labelledby="cb-title">
       <svg className="ca-ambient" aria-hidden="true" focusable="false">
         <defs>
           <pattern id="ca-dot" width="28" height="28" patternUnits="userSpaceOnUse">
@@ -141,11 +140,11 @@ export function StoryHero() {
         <div className="cb-hero-side">
           <p className="cb-lede">Paycurb is a payment firewall between an AI shopping agent and PayPal. Every payment call is allowed, held for you or blocked by rules you wrote, before PayPal sees it.</p>
           <div className="cb-actions">
-            <a className="cb-btn cb-btn-green" href="#open" data-magnet>
-              Open the live demo
+            <a className="cb-btn cb-btn-green" href="/login" data-magnet>
+              Get started
             </a>
             <a className="cb-btn cb-btn-line" href="#tour">
-              See one payment through
+              See how it works
             </a>
           </div>
         </div>
@@ -217,7 +216,7 @@ export function TourSection({ latency, mark }: { latency: string | null; mark: R
 
 export function Results({ facts, mark }: { facts: Facts; mark: React.ReactNode }) {
   return (
-    <section id="results" className="cb-section cb-results" aria-labelledby="cb-results-title">
+    <section id="security" className="cb-section cb-results" aria-labelledby="cb-results-title">
       <div className="cb-col">
         <div className="cb-head">
           <h2 id="cb-results-title">
@@ -380,17 +379,16 @@ export function ConnectSection({ mark }: { mark: React.ReactNode }) {
   );
 }
 
-export function End({ mark }: { mark: React.ReactNode }) {
+export function End() {
   return (
-    <section id="open" className="cb-section cb-end" aria-labelledby="cb-end-title">
+    <section id="start" className="cb-section cb-end" aria-labelledby="cb-end-title">
       <div className="cb-col cb-end-in">
         <div className="cb-end-copy">
           <h2 id="cb-end-title">
-            {mark}
-            Try to make it overspend.
+            Start with the sandbox workspace.
           </h2>
-          <p>Sign in with the public demo password, run the agent and watch decisions arrive. It is the PayPal sandbox, so every dollar is play money.</p>
-          <ul className="cb-end-marks" aria-label="What the demo shows">
+          <p>Write a policy in plain English, point your agent at it, watch the decisions.</p>
+          <ul className="cb-end-marks" aria-label="What every call gets">
             <li>
               <StopIcon size={15} />
               Blocked before PayPal
@@ -404,11 +402,21 @@ export function End({ mark }: { mark: React.ReactNode }) {
               Paid and chained
             </li>
           </ul>
-          <a className="cb-btn cb-btn-ghost" href={repo}>
-            Read the code
+          <p className="cb-end-runs">Where it runs today: a hosted sandbox workspace, open source under the MIT license, or self hosted with Postgres and a PayPal sandbox app.</p>
+        </div>
+        <div className="cb-signin" data-ui>
+          <h3>Sign in to your workspace</h3>
+          <p>Policies, the live feed, approvals and the audit log live in your workspace.</p>
+          <a className="cb-btn cb-btn-green" href="/login" data-magnet>
+            Get started
+          </a>
+          <a className="ca-sweep cb-signin-link" href="/login">
+            Already have a workspace? Sign in
+          </a>
+          <a className="ca-sweep cb-signin-link" href={repo}>
+            Read the code on GitHub
           </a>
         </div>
-        <OpenDemo />
       </div>
     </section>
   );

@@ -6,9 +6,9 @@ export function Footer() {
     <footer className="foot">
       <div className="foot-grid">
         <Logo />
-        {footer.columns.map((column, index) => (
-          <ul key={index}>
-            {column.map((link) => (
+        {footer.columns.map((column) => (
+          <ul key={column.title} aria-label={column.title}>
+            {column.links.map((link) => (
               <li key={link.href}>
                 <a href={link.href}>{link.label}</a>
               </li>
@@ -16,9 +16,7 @@ export function Footer() {
           </ul>
         ))}
       </div>
-      <p className="legal">
-        {footer.line} {footer.license}
-      </p>
+      <p className="legal">{footer.line}</p>
     </footer>
   );
 }

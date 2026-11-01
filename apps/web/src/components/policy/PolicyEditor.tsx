@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ApiError, errorText, postJson, useApi } from "@/lib/api";
 import { dayLabel, formatDateTime } from "@/lib/format";
 import { policyLines, policyText } from "@/lib/policySummary";
+import { DEFAULT_POLICY_TEXT } from "@/lib/setup";
 import type { ActivePolicy, CompileResult, Policy, PolicyVersion } from "@/lib/types";
 import { JsonBlock } from "../Drawer";
 import { AlertIcon, CheckIcon, ChevronRightIcon, PencilIcon } from "../icons";
@@ -14,8 +15,6 @@ import { VersionHistory } from "./VersionHistory";
 
 const example =
   "Spend at most $200 per day. Allow up to $100 per purchase. Ask me before any purchase of $50 or more. Only buy from Paper Co. Never allow payouts.";
-
-const STUB = /^\s*(default demo policy)?\s*$/i;
 
 const NO_MODEL = "No model is available on this host. Rules can be edited as JSON below.";
 
@@ -58,7 +57,7 @@ export function PolicyEditor() {
   const [activated, setActivated] = useState<number | null>(null);
 
   const written = active.data?.source_text ?? "";
-  const text = draft ?? (active.data && STUB.test(written) ? policyText(active.data.policy) : written);
+  const text = draft ?? (active.data && DEFAULT_POLICY_TEXT.test(written) ? policyText(active.data.policy) : written);
   const stale = compiled !== null && compiledText !== text;
   const editing = jsonText !== null;
   const parsed = editing ? readPolicy(jsonText) : null;

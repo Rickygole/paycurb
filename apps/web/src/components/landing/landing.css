@@ -125,6 +125,15 @@
   color: var(--accent);
 }
 
+.bar-signin {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bar-signin:hover {
+  text-decoration: underline;
+}
+
 .bar {
   position: sticky;
   top: 0;

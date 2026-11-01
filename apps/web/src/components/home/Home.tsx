@@ -28,7 +28,7 @@ export function Home() {
         <ConnectSection mark={<Mark />} />
         <Watch report={report} />
         <Replay />
-        <End mark={<Mark />} />
+        <End />
       </main>
       <Foot />
     </div>
