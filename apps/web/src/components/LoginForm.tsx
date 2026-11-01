@@ -20,28 +20,30 @@ export function LoginForm({ facts, demoPassword }: { facts: string[]; demoPasswo
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"password" | "demo" | null>(null);
 
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!password) return;
-    setBusy(true);
+  async function signIn(value: string, via: "password" | "demo") {
+    setBusy(via);
     setError(null);
     try {
-      await postJson("/api/login", { password });
+      await postJson("/api/login", { password: value });
       router.replace("/feed");
     } catch (problem) {
-      setError(problemText(problem));
-      setBusy(false);
+      setError(via === "demo" && problem instanceof ApiError && problem.status === 401 ? "The demo workspace did not open. Try again, or sign in with the owner password." : problemText(problem));
+      setBusy(null);
       input.current?.focus();
     }
   }
 
-  function fillDemo() {
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (password) signIn(password, "password");
+  }
+
+  function signInDemo() {
     if (!demoPassword) return;
     setPassword(demoPassword);
-    setError(null);
-    input.current?.focus();
+    signIn(demoPassword, "demo");
   }
 
   return (
@@ -105,12 +107,13 @@ export function LoginForm({ facts, demoPassword }: { facts: string[]; demoPasswo
                 {error}
               </p>
             )}
-            <button type="submit" className="btn btn-primary login-submit" disabled={busy || password.length === 0}>
-              {busy ? "Signing in" : "Sign in"}
+            <button type="submit" className="btn btn-primary login-submit" disabled={busy !== null || password.length === 0}>
+              {busy === "password" ? "Signing in" : "Sign in"}
             </button>
             {demoPassword && (
-              <button type="button" className="btn btn-outline login-submit" onClick={fillDemo} disabled={busy}>
-                Use the demo workspace
+              <button type="button" className="btn btn-outline login-submit" onClick={signInDemo} disabled={busy !== null} aria-busy={busy === "demo"}>
+                {busy === "demo" && <span className="spinner" aria-hidden="true" />}
+                {busy === "demo" ? "Opening the demo workspace" : "Use the demo workspace"}
               </button>
             )}
           </form>
