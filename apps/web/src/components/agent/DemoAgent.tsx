@@ -100,7 +100,7 @@ export function DemoAgent() {
       await postJson("/api/demo/reset");
       setEntries([]);
       askForStats();
-      setNotice({ tone: "ok", text: "Back to the starting state. Budgets, approvals and the feed are the seed data again." });
+      setNotice({ tone: "ok", text: "Back to the starting state. Budgets and approvals are reset. The audit log keeps its history so the chain stays verifiable." });
     } catch (problem) {
       setNotice({ tone: "error", text: errorText(problem) });
     } finally {
