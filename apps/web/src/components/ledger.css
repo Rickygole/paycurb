@@ -2493,9 +2493,8 @@ a.figure:hover .figure-cap {
 }
 
 .setup-steps li[data-done] .setup-mark {
-  border-color: transparent;
-  background: var(--allow-bg);
-  color: var(--allow-ink);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .setup-text h3 {

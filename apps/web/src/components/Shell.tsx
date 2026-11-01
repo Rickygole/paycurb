@@ -9,6 +9,7 @@ import { bump, STATS_EVENT } from "@/lib/motion";
 import type { Stats } from "@/lib/types";
 import { ChevronDownIcon, LogOutIcon, MenuIcon, XIcon } from "./icons";
 import { LogoGlyph } from "./Logo";
+import { LoadingBlock } from "./states";
 import { ThemeToggle } from "./ThemeToggle";
 
 const nav = [
@@ -175,8 +176,8 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      <main id="main" className="col page">
-        {children}
+      <main id="main" className="col page" aria-busy={!checked}>
+        {checked ? children : <LoadingBlock label="Checking your session" rows={3} height={72} />}
       </main>
     </div>
   );

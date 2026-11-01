@@ -67,7 +67,7 @@ export const endpoints: { group: string; items: Endpoint[] }[] = [
         path: "/api/stats",
         auth: "session",
         summary: "Today's spend against the daily limit, and counts.",
-        response: '{ "spent_today_cents": 7500, "remaining_cents": 12500, "pending_approvals": 1, "blocked_count": 4 }',
+        response: '{ "spent_today_cents": 4999, "remaining_cents": 15001, "pending_approvals": 1, "blocked_count": 4 }',
       },
       {
         method: "GET",
@@ -75,7 +75,7 @@ export const endpoints: { group: string; items: Endpoint[] }[] = [
         auth: "session",
         summary: "Recent decisions, newest first. limit defaults to 50, at most 200.",
         response:
-          '[{ "id": 12, "action_id": "...", "ts": "...", "tool": "create_order", "kind": "purchase", "merchant_id": "acme-office", "merchant_name": "Acme Office Supply", "amount_cents": 7500, "decision": "escalate", "rule_id": "R14", "reason": "...", "policy_version": 1, "paypal_ref": null, "payload_hash": "...", "action": { ... } }]',
+          '[{ "id": 12, "action_id": "...", "ts": "...", "tool": "create_order", "kind": "purchase", "merchant_id": "paper-co", "merchant_name": "Paper Co", "amount_cents": 9998, "decision": "escalate", "rule_id": "R14", "reason": "...", "policy_version": 1, "paypal_ref": null, "payload_hash": "...", "action": { ... } }]',
       },
       {
         method: "GET",
@@ -83,7 +83,7 @@ export const endpoints: { group: string; items: Endpoint[] }[] = [
         auth: "session",
         summary: "Held orders. Without status, the 100 most recent of any status.",
         response:
-          '[{ "id": "...", "action_id": "...", "status": "pending", "created_at": "...", "expires_at": "...", "amount_cents": 7500, "merchant_id": "acme-office", "merchant_name": "Acme Office Supply", "rule_id": "R14", "reason": "...", "line_items": [{ "sku": "LAMP-1", "qty": 1, "unit_cents": 7500 }], "execution": null }]',
+          '[{ "id": "...", "action_id": "...", "status": "pending", "created_at": "...", "expires_at": "...", "amount_cents": 9998, "merchant_id": "paper-co", "merchant_name": "Paper Co", "rule_id": "R14", "reason": "...", "line_items": [{ "sku": "NOTE-5", "qty": 2, "unit_cents": 4999 }], "execution": null }]',
       },
       {
         method: "POST",

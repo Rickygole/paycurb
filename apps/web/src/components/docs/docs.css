@@ -160,6 +160,7 @@
 
 .doc-table table {
   width: 100%;
+  font-variant-numeric: tabular-nums;
   border-collapse: collapse;
   font-size: 14px;
   line-height: 20px;
@@ -247,6 +248,7 @@
 .tools {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
   gap: 16px;
   margin: 0;
   padding: 0;

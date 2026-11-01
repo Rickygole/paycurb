@@ -36,10 +36,10 @@ const tools = [
   },
 ];
 
-const lamp = {
+const notebooks = {
   currencyCode: "USD",
-  payee: "acme-office@merchants.example",
-  items: [{ sku: "LAMP-1", name: "Desk Lamp", quantity: 1, itemCost: 75, itemTotal: 75 }],
+  payee: "paper-co@merchants.example",
+  items: [{ sku: "NOTE-5", name: "Notebooks 5 Pack", quantity: 2, itemCost: 49.99, itemTotal: 99.98 }],
 };
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -53,8 +53,8 @@ function Section({ id, title, children }: { id: string; title: string; children:
 
 export function Docs({ endpoint }: { endpoint: string }) {
   const config = json({ mcpServers: { paycurb: { type: "http", url: endpoint, headers: { "x-agent-id": "office-agent" } } } });
-  const call = json({ name: "create_order", arguments: lamp });
-  const held = json({ decision: "escalate", rule_id: "R14", reason: "Needs approval: $75.00 is at or above the $50.00 auto-approve line", approval_id: "APPROVAL_ID" });
+  const call = json({ name: "create_order", arguments: notebooks });
+  const held = json({ decision: "escalate", rule_id: "R14", reason: "Needs approval: $99.98 is at or above the $50.00 auto-approve line", approval_id: "APPROVAL_ID" });
   const curl = `curl -s ${endpoint} \\\n  -H 'content-type: application/json' \\\n  -H 'accept: application/json, text/event-stream' \\\n  -H 'x-agent-id: office-agent' \\\n  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`;
 
   return (

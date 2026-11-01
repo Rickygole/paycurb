@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
-import { dollars, merchantName, secondsLeft, stamp } from "@/lib/format";
+import { splitApprovals } from "@/lib/approvals";
+import { dollars, merchantName, stamp } from "@/lib/format";
 import { useEventStream } from "@/lib/stream";
 import type { ApprovalCard, Outcome } from "@/lib/types";
 import { DecisionBadge } from "../DecisionBadge";
@@ -124,7 +125,7 @@ function History({ cards }: { cards: ApprovalCard[] }) {
 
 export function Approvals() {
   const all = useApi<ApprovalCard[]>("/api/approvals", 3000);
-  const [touched, setTouched] = useState<string[]>([]);
+  const [acted, setActed] = useState<Record<string, number>>({});
   const now = useNow();
   const setAll = all.setData;
 
@@ -141,18 +142,13 @@ export function Approvals() {
     if (card && card.id) replace(card);
   });
 
-  function acted(card: ApprovalCard) {
-    setTouched((current) => (current.includes(card.id) ? current : [card.id, ...current]));
+  function decided(card: ApprovalCard) {
+    setActed((current) => ({ ...current, [card.id]: Date.now() }));
     replace(card);
+    all.reload();
   }
 
-  const list = all.data ?? [];
-  const active = list
-    .filter((card) => card.status === "pending" || touched.includes(card.id))
-    .sort((a, b) => a.expires_at.localeCompare(b.expires_at));
-  const history = list.filter((card) => card.status !== "pending" && !touched.includes(card.id)).slice(0, 8);
-  const waiting = active.filter((card) => card.status === "pending" && secondsLeft(card.expires_at, now) > 0).length;
-  const lapsed = active.filter((card) => card.status === "pending").length - waiting;
+  const { active, history, waiting, lapsed } = splitApprovals(all.data ?? [], acted, now);
 
   return (
     <>
@@ -194,7 +190,7 @@ export function Approvals() {
             </EmptyState>
           )}
           {active.map((card, index) => (
-            <ApprovalCardView key={card.id} card={card} index={index} nowMs={now} onChange={acted} />
+            <ApprovalCardView key={card.id} card={card} index={index} nowMs={now} onChange={decided} />
           ))}
           {all.data && <History cards={history} />}
         </div>
