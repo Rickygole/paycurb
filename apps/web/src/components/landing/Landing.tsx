@@ -7,6 +7,7 @@ import { Header } from "./Header";
 import { OpenDemo } from "./OpenDemo";
 import { Picker } from "./Picker";
 import { Reveal } from "./Reveal";
+import { Tick } from "./Tick";
 import { dollars, loadReport } from "./data";
 import { decide, scenarios } from "./scenarios";
 import "./landing.css";
@@ -77,14 +78,16 @@ export function Landing() {
               </li>
               <li>
                 <span className="stat num">
-                  {head.baseline_success} <small>of {head.attack_scenarios}</small>
+                  <Tick value={head.baseline_success} />
+                  <span className="visually-hidden">{head.baseline_success}</span> <small>of {head.attack_scenarios}</small>
                 </span>
                 <span>{evidence.baselineLabel}</span>
               </li>
               {report && (
                 <li>
                   <span className="stat num">
-                    {report.latency_ms.proxy_p50.toFixed(2)} <small>ms</small>
+                    <Tick value={report.latency_ms.proxy_p50} digits={2} />
+                    <span className="visually-hidden">{report.latency_ms.proxy_p50.toFixed(2)}</span> <small>ms</small>
                   </span>
                   <span>{evidence.latencyLabel}</span>
                 </li>

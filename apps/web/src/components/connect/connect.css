@@ -65,11 +65,15 @@
   color: var(--ink);
   font-size: 13px;
   cursor: pointer;
-  transition: border-color 160ms ease;
+  transition: border-color 160ms ease, transform 120ms var(--ease);
 }
 
 .copy-btn:hover {
   border-color: var(--muted);
+}
+
+.copy-btn:active {
+  transform: scale(0.96);
 }
 
 .code-block {

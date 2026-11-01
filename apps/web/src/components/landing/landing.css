@@ -235,10 +235,16 @@
 
 .statement span {
   display: block;
+  animation: rise 700ms var(--ease) both;
+}
+
+.statement span:nth-child(2) {
+  animation-delay: 110ms;
 }
 
 .hero-side {
   grid-column: 8 / -1;
+  animation: rise 600ms var(--ease) 220ms both;
   display: grid;
   gap: var(--s2);
 }
@@ -306,6 +312,7 @@
 
 .gd-post {
   fill: var(--accent);
+  animation: gd-hit 7.5s linear infinite;
 }
 
 .gd-arm {
@@ -344,6 +351,7 @@
   --pass: 712px 0px;
   --fall: 240px 120px;
   --rest: 180px 56px;
+  --bounce: 262px -6px;
   --open: 0px -60px;
 }
 
@@ -352,6 +360,7 @@
   --pass: 0px 204px;
   --fall: -90px 110px;
   --rest: -96px 14px;
+  --bounce: 0px 30px;
   --open: -96px 0px;
 }
 
@@ -793,11 +802,16 @@
   color: var(--ink);
   text-align: left;
   cursor: pointer;
-  transition: background-color 160ms ease, border-color 160ms ease;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 120ms var(--ease);
 }
 
 [data-ui] .option:last-child {
   border-bottom: 0;
+}
+
+[data-ui] .option:active,
+[data-ui] .segment:active {
+  transform: scale(0.98);
 }
 
 [data-ui] .option:hover {
@@ -1202,6 +1216,35 @@
   font-size: 14px;
 }
 
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 0.4em;
+  }
+}
+
+@keyframes gd-hit {
+  0%,
+  81% {
+    fill: var(--accent);
+    translate: 0px 0px;
+  }
+  82% {
+    fill: var(--red);
+    translate: 4px 0px;
+  }
+  84% {
+    translate: -2px 0px;
+  }
+  86% {
+    translate: 0px 0px;
+  }
+  90%,
+  100% {
+    fill: var(--accent);
+  }
+}
+
 @keyframes row-in {
   from {
     opacity: 0;
@@ -1328,10 +1371,14 @@
   69% {
     opacity: 1;
   }
-  81%,
-  84% {
+  81% {
     translate: var(--stop);
     rotate: 0deg;
+    opacity: 1;
+  }
+  85% {
+    translate: var(--bounce);
+    rotate: 8deg;
     opacity: 1;
   }
   97%,
