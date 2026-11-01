@@ -7,7 +7,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api, postJson, useApi } from "@/lib/api";
 import { bump, STATS_EVENT } from "@/lib/motion";
 import type { Stats } from "@/lib/types";
-import { ChevronDownIcon, GateMark, LogOutIcon, MenuIcon, XIcon } from "./icons";
+import { ChevronDownIcon, LogOutIcon, MenuIcon, XIcon } from "./icons";
+import { LogoGlyph } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 
 const nav = [
@@ -49,7 +50,9 @@ function usePending(enabled: boolean) {
 export function Brand() {
   return (
     <Link href="/feed" className="brand" aria-label="Paycurb, live feed">
-      <GateMark size={22} className="mark" />
+      <span className="mark">
+        <LogoGlyph size={20} />
+      </span>
       Paycurb
     </Link>
   );
