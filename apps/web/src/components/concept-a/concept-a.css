@@ -1570,7 +1570,6 @@
 }
 
 .ca-numbers {
-  view-timeline: --numbers block;
   background: var(--ink);
   color: #fff;
 }
@@ -2146,13 +2145,13 @@ tr:first-child .ca-link-seg {
       animation: ca-roll-up both;
       animation-timing-function: steps(var(--d), end);
       animation-timeline: view();
-      animation-range: entry 30% cover 50%;
+      animation-range: entry 0% entry 100%;
     }
 
     .ca-fig-bar::after {
       animation: ca-grow-x linear both;
       animation-timeline: view();
-      animation-range: entry 30% cover 50%;
+      animation-range: entry 0% entry 100%;
     }
 
     .ca-sheet tbody tr {
@@ -2223,15 +2222,6 @@ tr:first-child .ca-link-seg {
     padding-block: 64px;
   }
 
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .ca-roll.is-scroll .ca-roll-strip,
-      .ca-fig-bar::after {
-        animation-timeline: --numbers;
-        animation-range: entry 45% contain 60%;
-      }
-    }
-  }
 }
 
 @media (max-width: 1239px) {
@@ -2502,7 +2492,7 @@ tr:first-child .ca-link-seg {
 
   .ca-figs {
     grid-template-columns: 1fr;
-    row-gap: 72px;
+    row-gap: 96px;
   }
 
   .ca-ask {
@@ -2522,8 +2512,13 @@ tr:first-child .ca-link-seg {
   }
 
   .ca-foot-top {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 20px;
+  }
+
+  .ca-foot-line {
+    font-size: 18px;
+    max-width: none;
   }
 
   .ca-legal {
