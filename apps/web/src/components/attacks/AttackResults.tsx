@@ -42,8 +42,8 @@ export function AttackResults() {
         title="Attacks"
         description={
           report
-            ? `${count(report.headline.attack_scenarios)} scripted attacks, each run once straight to PayPal and once through Paycurb. Report from ${formatDateTime(report.generated_at)}.`
-            : "Scripted attacks, each run once straight to PayPal and once through Paycurb."
+            ? `${count(report.headline.attack_scenarios)} attack scenarios, each run once straight to PayPal and once through Paycurb. The prompt injection group uses a real local model over ten trials. Report from ${formatDateTime(report.generated_at)}.`
+            : "Attack scenarios, each run once straight to PayPal and once through Paycurb."
         }
         actions={
           <button type="button" className="btn" onClick={runSuite} disabled={running}>
@@ -101,7 +101,7 @@ function Report({ report }: { report: AttackReport }) {
           <span className="muted">without Paycurb</span>
         </div>
         <p className="verdict-note rise" style={{ "--i": 2 } as React.CSSProperties}>
-          <b className="num">{dollars(headline.money_lost_baseline_cents)}</b> moved beyond policy without it, <b className="num">{dollars(headline.money_lost_protected_cents)}</b> with it.
+          <b className="num">{dollars(headline.money_lost_baseline_cents)}</b> moved beyond policy without it, summed over every run and trial, <b className="num">{dollars(headline.money_lost_protected_cents)}</b> with it.
           {!headline.includes_group_a && " The live agent group is not counted yet."}
         </p>
       </section>
