@@ -188,7 +188,7 @@ function Report({ report }: { report: AttackReport }) {
       </section>
 
       <p className="small muted" style={{ borderTop: "1px solid var(--hairline)", paddingTop: 16 }}>
-        Paycurb bounds loss to your policy limits. It does not stop every kind of attack. Scenarios are scripted and fixed.
+        Paycurb bounds loss to your policy limits. It does not stop every kind of attack. The prompt injection group uses a real local model; the other scenarios are scripted and fixed.
       </p>
     </div>
   );
